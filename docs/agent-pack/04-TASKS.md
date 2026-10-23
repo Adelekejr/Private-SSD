@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phases 1 and 2 are committed through `4e770d0f3f1b188eaf1dc037201d29588ff990fa`. Adeleke explicitly approved Phase 3 only. Phase 4 and later remain unapproved. Do not commit, push, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
+**Current scope rule (2026-10-23):** Phases 1–3 are committed and pushed through `a98ec9db3e1eebd157af2ebc5303ee87e25e9dbb`. Adeleke approved Phase 4 local implementation only. Stop for review after Phase 4; Phase 5 and later remain unapproved. Do not commit or push Phase 4, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -71,11 +71,20 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 
 ## 6. Phase 4 — agent offer workflow
 
-- [ ] Implement buyer-agent parsing into typed constraints.
-- [ ] Implement three deterministic supplier agents.
-- [ ] Validate every agent response against a schema.
-- [ ] Show offer comparison with evidence and risk reasons.
-- [ ] Add a prompt-injection or malformed-offer fixture and show it being rejected.
+- [x] Implement buyer-agent parsing into typed constraints.
+- [x] Implement three deterministic supplier agents.
+- [x] Validate every agent response against a schema.
+- [x] Show offer comparison with evidence and risk reasons.
+- [x] Add a prompt-injection or malformed-offer fixture and show it being rejected.
+
+### Phase 4 evidence (2026-10-23)
+
+- Added a deterministic buyer-request parser that extracts explicit purpose, budget, asset, unit-price, reliability, destination, recipient, and approval-threshold values into typed constraints. It returns suggestions only; invalid/missing fields fall back to the saved mandate and no mandate is updated.
+- Added three local deterministic supplier fixtures and `POST /api/mandates/:id/offers/simulate`. Each response passes a strict runtime schema. The server supplies the final `not_evaluated` status; no policy decision is delegated to a supplier agent.
+- Added a malformed prompt-injection fixture with an unexpected instruction field. Strict validation rejects it and the UI shows a generic rejection reason without returning or logging the untrusted instruction. Offer comparison shows evidence and clearly labels supplier risk notes as unverified.
+- No external supplier, AI, or NEAR services are called. The request and generated offers are not persisted. Policy enforcement, human approval, private inference, wallets, and settlement remain out of scope for Phase 4.
+- `npm test` passed all 17 tests. `npm run lint`, `npm run typecheck`, and `npm run build` passed. A local production-server smoke test confirmed the page, health phase `agent-offer-workflow`, three simulated offers, rejection without echoing the injection text, and unchanged saved mandate state. No public preview or browser automation was run.
+- Phase 4 changes remain local and uncommitted/unpushed; no Vercel, deployment, visibility, or external supplier change occurred. Stop for Adeleke's review before Phase 5.
 
 ## 7. Phase 5 — policy and security
 

@@ -499,7 +499,199 @@ h1 {
   color: var(--muted);
   font-size: 10px;
 }
-
+.offer-workspace {
+  display: grid;
+  gap: 15px;
+  margin-top: 22px;
+  padding-top: 19px;
+  border-top: 1px solid var(--line);
+}
+.offer-section-heading,
+.offer-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.offer-section-heading h3,
+.offer-section-heading h4,
+.offer-card-heading h5 {
+  margin: 5px 0 0;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.offer-section-heading h3 {
+  font-size: 19px;
+}
+.offer-section-heading h4 {
+  font-size: 16px;
+}
+.offer-card-heading h5 {
+  font-size: 14px;
+}
+.offer-section-heading > .state-pill,
+.offer-card-heading > .state-pill {
+  flex: 0 0 auto;
+}
+.offer-intro,
+.proposal-provenance {
+  margin: -7px 0 0;
+  color: var(--secondary);
+  font-size: 10px;
+}
+.buyer-request-field textarea {
+  min-height: 100px;
+}
+.offer-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: -3px;
+}
+.offer-simulation-note {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+.offer-message {
+  margin: -5px 0 0;
+  color: var(--green-readable);
+  font-size: 10px;
+}
+.offer-empty-state {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  background: var(--surface);
+}
+.buyer-proposal,
+.offer-comparison,
+.rejected-responses {
+  display: grid;
+  gap: 11px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.proposal-provenance {
+  margin: 0;
+  line-height: 1.5;
+}
+.proposal-constraints {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+.proposal-constraint {
+  min-width: 0;
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.proposal-constraint dt,
+.offer-facts dt {
+  color: var(--secondary);
+  font-size: 9px;
+}
+.proposal-constraint dd,
+.offer-facts dd {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.proposal-warning {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--review);
+  color: var(--secondary);
+  background: var(--soft);
+  font-size: 10px;
+}
+.state-not-evaluated {
+  color: var(--secondary);
+  border-color: var(--line);
+  background: var(--soft);
+}
+.offer-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.offer-card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: white;
+}
+.offer-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+  margin: 0;
+}
+.offer-facts > div {
+  min-width: 0;
+}
+.offer-facts > div:first-child {
+  grid-column: 1 / -1;
+}
+.offer-facts dd {
+  font-weight: 600;
+}
+.offer-evidence-group {
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+.offer-detail-label {
+  margin: 0;
+  color: var(--secondary);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+}
+.offer-evidence-group ul {
+  display: grid;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding-left: 16px;
+  color: var(--secondary);
+  font-size: 9px;
+  line-height: 1.4;
+}
+.offer-evidence-group > p:last-child:not(.offer-detail-label) {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+.offer-risk-group {
+  border-top-color: rgb(183 123 42 / 45%);
+}
+.rejected-response {
+  display: grid;
+  gap: 4px;
+  padding: 9px 11px;
+  border-left: 2px solid var(--blocked);
+  background: #fffafa;
+  font-size: 10px;
+}
+.rejected-response strong {
+  color: var(--blocked);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+}
+.rejected-response span {
+  font-weight: 650;
+}
+.rejected-response p {
+  margin: 0;
+  color: var(--secondary);
+}
 .mandate-form {
   padding-top: 15px;
 }
@@ -853,6 +1045,9 @@ h1 {
     gap: 13px;
     padding-top: 17px;
   }
+  .offer-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
   .mandate-index {
     order: 1;
@@ -933,6 +1128,13 @@ h1 {
   .form-two-column {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
+  }
+  .proposal-constraints {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .offer-section-heading,
+  .offer-card-heading {
+    flex-direction: column;
   }
 
   .privacy-options {

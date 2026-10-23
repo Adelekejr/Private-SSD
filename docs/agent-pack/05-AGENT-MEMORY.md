@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-The current human instruction explicitly authorizes **Phase 3 mandate workflow only**, building on completed Phase 1 and Phase 2 work. Phase 4 and later remain unapproved. **No commit, push, deploy, Vercel change, or repository visibility change is permitted without separate explicit human approval.** This live scope supersedes the Phase 1-only approval note in the original source PDF.
+The current human instruction authorizes **Phase 4 local implementation only**, building on completed Phases 1–3. Stop for review after Phase 4; Phase 5 and later remain unapproved. **Do not commit or push Phase 4, deploy, change Vercel, or change repository visibility without separate explicit human approval.** This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -86,6 +86,13 @@ The source memory described the initial state as:
 The “existing PrivateSpend dashboard and safe simulated server boundary” statement above is historical source context and is **contradicted by the verified current repository baseline supplied for this task: a new, empty private repository, separate from InvoiceLens**. Treat the current repository as having no reusable PrivateSpend application implementation unless later verified by the human or by direct inspection.
 
 Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code exists. Preserve this note so future agents do not mistake the historical claim for current implementation evidence.
+
+### 7.3 Phase 4 checkpoint (2026-10-23)
+
+- Added deterministic buyer-request parsing to typed, non-binding constraint suggestions; missing or invalid values fall back to the saved mandate.
+- Added three deterministic local supplier agents, strict response validation, visible evidence and unverified risk notes, and a prompt-injection fixture that is rejected without echoing its instruction.
+- Offer results are ephemeral and explicitly `NOT EVALUATED`; there is no policy engine, approval, private inference, supplier integration, wallet, or settlement in this phase.
+- `npm test` passed 17 tests; lint, type-check, production build, and local production-server smoke checks passed. Phase 4 remains local and uncommitted/unpushed pending Adeleke's review. No Vercel or deployment change occurred. Phase 5 requires separate approval.
 
 ## 8. What not to do
 

@@ -21,7 +21,7 @@ export type SettlementStatus =
 
 export type SettlementMode = "simulated" | "testnet" | "live";
 
-export type PolicyResult = "pass" | "blocked" | "review";
+export type PolicyResult = "not_evaluated" | "pass" | "blocked" | "review";
 
 export type Constraint =
   | {

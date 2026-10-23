@@ -89,6 +89,6 @@ The current official schedule says the development window is **1 November 2026 0
 
 ## 12. Current human-scope rule
 
-The original source PDF recorded the Phase 1 foundation as the then-approved scope. That historical scope is superseded for this implementation: the current human instruction explicitly authorizes **Phase 3 mandate workflow only**, building on completed Phases 1 and 2. Phase 4 and later work are not authorized. **No commit, push, deploy, Vercel change, or visibility change may occur without separate explicit human approval.** The current human instruction controls over generic workflow language in the source documents.
+The current human instruction authorizes **Phase 4 local implementation only**, building on completed Phases 1–3. Stop for Adeleke's review at the end of Phase 4; Phase 5 and later require separate approval. **Do not commit or push Phase 4, deploy, modify Vercel, publish, or change repository visibility without separate explicit approval.** The current human instruction controls over older phase notes and generic workflow language in source documents.
 
-The current page supports mandate creation/editing and a redacted audit view. Supplier offers, policy evaluation, human approval actions, private inference, wallet operations, and settlement are still unimplemented and must not be described as working product features.
+The current page supports mandate creation/editing, a redacted audit view, deterministic buyer-request parsing, and three schema-validated local supplier proposals. The buyer parser only suggests typed fields; offers are not evaluated by policy and display `NOT EVALUATED`. No external supplier, AI provider, wallet, NEAR, testnet, mainnet, approval action, private inference, or settlement is used.

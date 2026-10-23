@@ -4,9 +4,12 @@ import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 import type {
   AuditEvent,
+  Constraint,
   PrivacyMode,
   ProcurementMandate,
+  SupplierOffer,
 } from "../domain/models";
+import type { BuyerRequestProposal } from "../domain/buyer-request-parser";
 import {
   parseMandateTerms,
   type MandateValidationErrors,
@@ -29,6 +32,17 @@ type SaveResponse = {
   auditEvents: AuditEvent[];
   error?: string;
   errors?: MandateValidationErrors;
+};
+type OfferRunResponse = {
+  mode: "SIMULATED";
+  buyerProposal: BuyerRequestProposal;
+  offers: SupplierOffer[];
+  rejectedResponses: Array<{
+    supplierAgent: string;
+    fixtureType: "prompt-injection" | "malformed-response";
+    reason: string;
+  }>;
+  error?: string;
 };
 
 const privacyModes: { value: PrivacyMode; label: string; note: string }[] = [
@@ -79,6 +93,48 @@ function formFromMandate(mandate: ProcurementMandate): FormState {
     approvalThreshold: String(mandate.approvalThreshold),
     privacyMode: mandate.privacyMode,
   };
+}
+
+function buyerPromptForMandate(mandate: ProcurementMandate): string {
+  const parts = [
+    `Purpose: ${mandate.purpose}`,
+    `Budget: ${formatMoney(mandate.budget, mandate.asset)}`,
+  ];
+  if (mandate.maxUnitPrice !== undefined) {
+    parts.push(`Max unit price: ${formatMoney(mandate.maxUnitPrice, mandate.asset)}`);
+  }
+  if (mandate.minReliability !== undefined) {
+    parts.push(`Minimum reliability: ${(mandate.minReliability * 100).toFixed(0)}%`);
+  }
+  parts.push(
+    `Allowed destination: ${mandate.allowedDestinations.join(", ")}`,
+    `Approved recipients: ${mandate.approvedRecipients.join(", ")}`,
+    `Approval threshold: ${formatMoney(mandate.approvalThreshold, mandate.asset)}`,
+  );
+  return parts.join("; ");
+}
+
+function constraintDisplay(constraint: Constraint): { label: string; value: string } {
+  switch (constraint.kind) {
+    case "budget":
+      return { label: "Budget", value: formatMoney(constraint.amount, constraint.asset) };
+    case "max_unit_price":
+      return {
+        label: "Maximum unit price",
+        value: `${formatMoney(constraint.amount, constraint.asset)} / ${constraint.unit}`,
+      };
+    case "min_reliability":
+      return { label: "Minimum reliability", value: `${(constraint.score * 100).toFixed(0)}%` };
+    case "allowed_destinations":
+      return { label: "Allowed destinations", value: constraint.chains.join(", ") };
+    case "approved_recipients":
+      return { label: "Approved recipients", value: constraint.recipients.join(", ") };
+    case "approval_threshold":
+      return {
+        label: "Human approval threshold",
+        value: formatMoney(constraint.amount, constraint.asset),
+      };
+  }
 }
 
 function splitList(value: string): string[] {
@@ -144,6 +200,12 @@ export function MandateWorkspace({
   const [errors, setErrors] = useState<MandateValidationErrors>({});
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [buyerRequest, setBuyerRequest] = useState(() =>
+    initialMandates[0] ? buyerPromptForMandate(initialMandates[0]) : "",
+  );
+  const [offerRun, setOfferRun] = useState<OfferRunResponse | null>(null);
+  const [offerMessage, setOfferMessage] = useState("");
+  const [runningOffers, setRunningOffers] = useState(false);
   const idempotencyKey = useRef<string | null>(null);
 
   const selectedMandate = mandates.find((mandate) => mandate.id === selectedId) ?? null;
@@ -163,6 +225,9 @@ export function MandateWorkspace({
     setForm(blankForm());
     setErrors({});
     setMessage("");
+    setOfferRun(null);
+    setOfferMessage("");
+    setBuyerRequest("");
     idempotencyKey.current = null;
   }
 
@@ -172,6 +237,8 @@ export function MandateWorkspace({
     setForm(formFromMandate(mandate));
     setErrors({});
     setMessage("");
+    setOfferRun(null);
+    setOfferMessage("");
     idempotencyKey.current = null;
   }
 
@@ -181,6 +248,9 @@ export function MandateWorkspace({
     setForm(formFromMandate(mandate));
     setErrors({});
     setMessage("");
+    setBuyerRequest(buyerPromptForMandate(mandate));
+    setOfferRun(null);
+    setOfferMessage("");
     try {
       const response = await fetch(`/api/mandates/${encodeURIComponent(mandate.id)}`);
       const payload = (await response.json()) as SaveResponse;
@@ -256,6 +326,8 @@ export function MandateWorkspace({
       setSelectedId(payload.mandate.id);
       setAuditEvents(payload.auditEvents);
       setForm(formFromMandate(payload.mandate));
+      setBuyerRequest(buyerPromptForMandate(payload.mandate));
+      setOfferRun(null);
       setMode("view");
       setErrors({});
       setMessage(
@@ -271,6 +343,35 @@ export function MandateWorkspace({
     }
   }
 
+  async function simulateOffers() {
+    if (!selectedMandate) return;
+    setRunningOffers(true);
+    setOfferMessage("");
+    try {
+      const response = await fetch(
+        `/api/mandates/${encodeURIComponent(selectedMandate.id)}/offers/simulate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requestText: buyerRequest }),
+        },
+      );
+      const payload = (await response.json()) as OfferRunResponse;
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Could not generate offer proposals.");
+      }
+      setOfferRun(payload);
+      setOfferMessage("Three local demo offers were schema-checked; no supplier was contacted.");
+    } catch (error) {
+      setOfferRun(null);
+      setOfferMessage(
+        error instanceof Error ? error.message : "Could not generate offer proposals.",
+      );
+    } finally {
+      setRunningOffers(false);
+    }
+  }
+
   return (
     <main className="site-shell workspace-shell">
       <header className="topline">
@@ -281,7 +382,7 @@ export function MandateWorkspace({
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
         <div className="header-meta">
-          <span className="phase-tag">MANDATE WORKFLOW / PHASE 03</span>
+          <span className="phase-tag">AGENT OFFER WORKFLOW / PHASE 04</span>
           <span className="workspace-tag">DEMO WORKSPACE · VOLATILE STORAGE</span>
         </div>
       </header>
@@ -295,10 +396,10 @@ export function MandateWorkspace({
       </section>
 
       <nav className="workflow-rail" aria-label="Procurement workflow stages">
-        <span className="workflow-current" aria-current="step">
+        <span className="workflow-available">
           <b>01</b> MANDATE
         </span>
-        <span className="workflow-future"><b>02</b> OFFERS · LATER PHASE</span>
+        <span className="workflow-current" aria-current="step"><b>02</b> OFFERS</span>
         <span className="workflow-future"><b>03</b> POLICY · LATER PHASE</span>
         <span className="workflow-future"><b>04</b> APPROVAL · LATER PHASE</span>
         <span className="workflow-future"><b>05</b> SETTLEMENT · LATER PHASE</span>
@@ -422,7 +523,7 @@ export function MandateWorkspace({
                 <span>{selectedPrivacy?.note ?? "This value is stored as a mandate preference only."}</span>
               </div>
               <p className="phase-boundary">
-                Offer evaluation, policy decisions, approval actions, private inference, and settlement are not part of this phase.
+                Supplier offers are proposals only. Deterministic policy checks, human approval, private inference, and settlement remain later phases.
               </p>
             </div>
           ) : (
@@ -534,6 +635,152 @@ export function MandateWorkspace({
               </div>
             </form>
           )}
+          {mode === "view" && selectedMandate ? (
+            <section className="offer-workspace" aria-labelledby="offers-title">
+              <div className="offer-section-heading">
+                <div>
+                  <p className="eyebrow">BUYER AGENT / DETERMINISTIC PARSER</p>
+                  <h3 id="offers-title">Compare supplier proposals</h3>
+                </div>
+                <span className="state-pill">SIMULATED</span>
+              </div>
+              <p className="offer-intro">
+                Parse a request into typed suggestions, then compare three local demo offers. The saved mandate remains authoritative; no supplier is contacted.
+              </p>
+              <div className="form-field buyer-request-field">
+                <label htmlFor="buyer-request">Buyer request</label>
+                <textarea
+                  id="buyer-request"
+                  name="buyer-request"
+                  rows={4}
+                  maxLength={2_000}
+                  value={buyerRequest}
+                  aria-describedby="buyer-request-hint"
+                  onChange={(event) => {
+                    setBuyerRequest(event.target.value);
+                    setOfferRun(null);
+                    setOfferMessage("");
+                  }}
+                />
+                <span className="field-hint" id="buyer-request-hint">
+                  Deterministic parsing only. Suggestions do not update the saved mandate or authorize spend.
+                </span>
+              </div>
+              <div className="offer-actions">
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={() => void simulateOffers()}
+                  disabled={runningOffers}
+                >
+                  {runningOffers ? "Generating proposals…" : "Parse request + generate offers"}
+                </button>
+                <span className="offer-simulation-note">LOCAL FIXTURES · NO EXTERNAL CALLS</span>
+              </div>
+              {offerMessage ? (
+                <p className="offer-message" role="status" aria-live="polite">{offerMessage}</p>
+              ) : null}
+
+              {!offerRun ? (
+                <p className="empty-state offer-empty-state">
+                  Run the comparison to inspect the typed buyer proposal, supplier evidence, and any rejected response.
+                </p>
+              ) : (
+                <>
+                  <section className="buyer-proposal" aria-labelledby="proposal-title">
+                    <div className="offer-section-heading">
+                      <div>
+                        <p className="eyebrow">HUMAN-REVIEWABLE SUGGESTION</p>
+                        <h4 id="proposal-title">Typed buyer constraints</h4>
+                      </div>
+                      <span className="state-pill">NOT APPLIED</span>
+                    </div>
+                    <p className="proposal-provenance">
+                      Parsed fields: {offerRun.buyerProposal.extractedFields.length > 0
+                        ? offerRun.buyerProposal.extractedFields.join(", ")
+                        : "none"}. Other values are inherited from the saved mandate.
+                    </p>
+                    <dl className="proposal-constraints">
+                      {offerRun.buyerProposal.constraints.map((constraint) => {
+                        const item = constraintDisplay(constraint);
+                        return (
+                          <div className="proposal-constraint" key={constraint.id}>
+                            <dt>{item.label}</dt>
+                            <dd>{item.value}</dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                    {offerRun.buyerProposal.warnings.map((warning) => (
+                      <p className="proposal-warning" key={warning}>{warning}</p>
+                    ))}
+                  </section>
+
+                  <section className="offer-comparison" aria-labelledby="comparison-title">
+                    <div className="offer-section-heading">
+                      <div>
+                        <p className="eyebrow">SUPPLIER AGENTS / THREE DETERMINISTIC FIXTURES</p>
+                        <h4 id="comparison-title">Offer comparison</h4>
+                      </div>
+                      <span className="state-pill state-not-evaluated">POLICY NOT RUN</span>
+                    </div>
+                    <div className="offer-list">
+                      {offerRun.offers.map((offer) => (
+                        <article className="offer-card" key={offer.id}>
+                          <div className="offer-card-heading">
+                            <div>
+                              <p className="eyebrow">SUPPLIER PROPOSAL</p>
+                              <h5>{offer.supplierAgent}</h5>
+                            </div>
+                            <span className="state-pill state-not-evaluated">NOT EVALUATED</span>
+                          </div>
+                          <dl className="offer-facts">
+                            <div><dt>Total amount</dt><dd>{formatMoney(offer.amount, offer.asset)}</dd></div>
+                            <div><dt>Unit price</dt><dd>{offer.unitPrice === undefined ? "Not supplied" : `${formatMoney(offer.unitPrice, offer.asset)} / unit`}</dd></div>
+                            <div><dt>Reliability claim</dt><dd>{(offer.reliabilityScore * 100).toFixed(0)}%</dd></div>
+                            <div><dt>Destination</dt><dd>{offer.destinationChain}</dd></div>
+                            <div><dt>Proposed recipient</dt><dd>{offer.recipient}</dd></div>
+                          </dl>
+                          <div className="offer-evidence-group">
+                            <p className="offer-detail-label">EVIDENCE</p>
+                            <ul>{offer.evidence.map((item) => <li key={item}>{item}</li>)}</ul>
+                          </div>
+                          <div className="offer-evidence-group offer-risk-group">
+                            <p className="offer-detail-label">SUPPLIER RISK NOTES · UNVERIFIED</p>
+                            {offer.riskReasons.length > 0 ? (
+                              <ul>{offer.riskReasons.map((item) => <li key={item}>{item}</li>)}</ul>
+                            ) : <p>No supplier risk notes provided.</p>}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="rejected-responses" aria-labelledby="rejected-title">
+                    <div className="offer-section-heading">
+                      <div>
+                        <p className="eyebrow">SCHEMA VALIDATION</p>
+                        <h4 id="rejected-title">Rejected responses</h4>
+                      </div>
+                    </div>
+                    {offerRun.rejectedResponses.map((item) => (
+                      <div className="rejected-response" key={`${item.supplierAgent}-${item.fixtureType}`}>
+                        <strong>{item.fixtureType === "prompt-injection" ? "PROMPT-INJECTION FIXTURE REJECTED" : "MALFORMED RESPONSE REJECTED"}</strong>
+                        <span>{item.supplierAgent}</span>
+                        <p>{item.reason}</p>
+                      </div>
+                    ))}
+                    {offerRun.rejectedResponses.length === 0 ? (
+                      <p className="empty-state">No invalid responses in this run.</p>
+                    ) : null}
+                  </section>
+                  <p className="phase-boundary">
+                    These are local demo proposals. Risk notes are unverified, and policy pass/review/block decisions are deliberately deferred to Phase 5.
+                  </p>
+                </>
+              )}
+            </section>
+          ) : null}
           <p className="form-message" role="status" aria-live="polite">{message}</p>
         </section>
 
