@@ -4,7 +4,7 @@ PrivateSpend Network is a constrained procurement workflow for small businesses.
 
 ## Current state
 
-The repository includes the Phase 5 deterministic policy/security work, Phase 6 simulated private-inference boundary, and Phase 7 **local simulated settlement lifecycle**. Users can create/edit mandates, review the redacted audit trail, compare three deterministic local offers, create a server-issued simulated quote, explicitly approve it, run the simulation, and inspect its status and receipt. The settlement adapter interface is provider-neutral; the implemented adapter is local simulation only.
+The repository includes the Phase 5 deterministic policy/security work, Phase 6 simulated private-inference boundary, Phase 7 local simulated settlement lifecycle, and Phase 8 frontend/design refinements. The six-stage route reports current workflow status and links to stage panels when available; empty, loading, blocked, expired, and error states have explicit text labels. The interface retains the mandate form, local offer comparison, deterministic policy evidence, explicit human approval, simulated quote/receipt, and redacted audit trail.
 
 The demo remains at a **1,000 USDC approval threshold** and retains the **4,920 USDC Ember Compute offer**. The server-computed policy result stays `REVIEW REQUIRED` because the offer exceeds the threshold. A threshold-only review may receive a quote, but it advances only after a separate explicit human approval; approval does not rewrite the policy result. `BLOCKED` offers and other review outcomes, including a missing configured unit price, cannot enter the settlement lifecycle. The server revalidates quote expiry, destination, amount, asset, and recipient immediately before simulated receipt creation.
 
@@ -54,4 +54,4 @@ The currently published [NEAR HACKATHON rules](https://nearhackathon.com/HACKATH
 
 ## Status
 
-Phases 1–6 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `dd44a99274b63ca73a73c302fcaedc402d01120f`. Phase 7's simulated settlement slice is complete locally for owner review and remains uncommitted/unpushed. No provider, supplier, wallet, live/testnet route, Vercel connection/change, deployment, publication, or visibility change has been made. Stop after this simulated settlement slice; Phase 8 and any live integration require a separate owner decision. See `docs/agent-pack/04-TASKS.md` for evidence-backed status and `memory.md` for durable decisions.
+Phases 1–7 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 is complete locally for owner review and remains uncommitted/unpushed; Phase 9 has not started. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change has been made. See `docs/agent-pack/04-TASKS.md` for Phase 8 evidence and `memory.md` for durable decisions.

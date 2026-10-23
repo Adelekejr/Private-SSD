@@ -1354,3 +1354,183 @@ h1 {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Phase 8: workflow route, explicit state labels, and responsive anchors. */
+.workflow-rail {
+  display: block;
+  padding: 10px 0;
+}
+
+.workflow-rail > ol {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow-stage {
+  min-width: 0;
+}
+
+.workflow-link {
+  min-height: 46px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 5px 6px;
+  border-bottom: 2px solid transparent;
+  color: var(--secondary);
+  text-decoration: none;
+  transition: background-color 220ms ease, border-color 220ms ease;
+}
+
+.workflow-link:hover {
+  background: var(--soft);
+}
+
+.workflow-stage-label {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  overflow-wrap: anywhere;
+}
+
+.workflow-stage-label b {
+  width: 19px;
+  height: 19px;
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: white;
+  font-size: 8px;
+}
+
+.workflow-stage-state {
+  padding-left: 25px;
+  color: var(--muted);
+  font-size: 7px;
+  line-height: 1.35;
+  letter-spacing: 0.045em;
+  overflow-wrap: anywhere;
+}
+
+.workflow-complete .workflow-stage-state,
+.workflow-available .workflow-stage-state {
+  color: var(--green-readable);
+}
+
+.workflow-current .workflow-link {
+  border-bottom-color: var(--green-readable);
+  color: var(--ink);
+}
+
+.workflow-current .workflow-stage-label {
+  font-weight: 750;
+}
+
+.workflow-current .workflow-stage-label b {
+  border-color: var(--green-readable);
+  background: var(--green);
+}
+
+.workflow-current .workflow-stage-state {
+  color: var(--green-readable);
+  font-weight: 650;
+}
+
+.workflow-review-required .workflow-stage-state,
+.workflow-expired .workflow-stage-state {
+  color: var(--review);
+  font-weight: 650;
+}
+
+.workflow-blocked .workflow-stage-state {
+  color: var(--blocked);
+  font-weight: 650;
+}
+
+.workflow-stage[id],
+#mandate-step,
+#offers-step,
+#policy-step,
+#settlement-step,
+#evidence-step {
+  scroll-margin-top: 18px;
+}
+
+.route-anchor {
+  display: block;
+  height: 0;
+  scroll-margin-top: 18px;
+}
+
+.form-message,
+.offer-message,
+.settlement-message,
+.loading-state {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--green-readable);
+  color: var(--secondary);
+  background: var(--soft);
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.form-message.is-error,
+.offer-message.is-error,
+.settlement-message.is-error {
+  border-left-color: var(--blocked);
+  color: var(--blocked);
+  background: #fffafa;
+}
+
+.loading-state {
+  border-left-color: var(--review);
+  color: var(--secondary);
+}
+
+@media (max-width: 720px) {
+  .workflow-rail > ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+}
+
+@media (max-width: 520px) {
+  .workflow-rail > ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .workflow-link {
+    min-height: 42px;
+    padding-inline: 3px;
+  }
+
+  .workflow-stage-label {
+    gap: 4px;
+    font-size: 8px;
+  }
+
+  .workflow-stage-state {
+    padding-left: 23px;
+    font-size: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-link {
+    transition: none;
+  }
+}

@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-Phases 1–6 are committed and pushed by the coordinator to `phase-1-foundation` through `dd44a99274b63ca73a73c302fcaedc402d01120f`. The current owner instruction authorizes **Phase 7 local simulated settlement only**. Keep Phase 7 uncommitted and unpushed; stop for owner review and do not start Phase 8. Preserve the 1,000 USDC threshold and 4,920 USDC offer. A threshold-only `REVIEW REQUIRED` result can proceed only after explicit human approval; blocked and unrelated review results remain ineligible. No provider, wallet, live/testnet route, Vercel connection/change, deployment, publication, or visibility change is authorized. This live scope supersedes older phase-only approval notes.
+Phases 1–7 are committed and pushed by the coordinator to `phase-1-foundation` at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 frontend/design work was authorized and is complete locally for owner review. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Keep Phase 8 uncommitted and unpushed; stop before Phase 9. Only a threshold-only `REVIEW REQUIRED` result can proceed after explicit human approval; blocked and unrelated review results remain ineligible. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change is authorized. This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -115,7 +115,14 @@ Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code e
 - Server-issued offer-run IDs bind quote requests to offers and policy results computed on the server. The existing 1,000 USDC threshold and 4,920 USDC Ember Compute offer are unchanged. Its policy stays `REVIEW REQUIRED`; only a threshold-only review may receive a quote and only after explicit human approval may it advance. Blocked offers and other review outcomes remain ineligible.
 - The server rechecks expiry, amount/budget, asset, destination, recipient, and unchanged policy before simulated receipt creation. Audit summaries are redacted. Offer-run, quote, status, receipt, nonce, and idempotency state are process-local and volatile.
 - All 38 tests passed; lint, typecheck, and production build passed. The local production-server smoke verified `settlement-simulation`, blocked/review outcomes, explicit approval, no pre-approval execution, final simulated status/receipt, and `moneyMoved: false`; the local server was stopped afterward.
-- No provider, supplier, wallet, key, live/testnet route, funds, Vercel, deployment, publication, or visibility change was used. Phase 7 remains local/uncommitted; stop for owner review before any later phase.
+- No provider, supplier, wallet, key, live/testnet route, funds, Vercel, deployment, publication, or visibility change was used. Phase 7 was subsequently committed and pushed by the coordinator at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`; Phase 8 frontend/design work is complete locally for owner review and remains uncommitted/unpushed; Phase 9 has not started.
+
+### 7.7 Phase 8 checkpoint (2026-10-23)
+
+- Refined the existing UI with the six-step workflow route, text-labeled workflow and request states, explicit loading/empty/error feedback, responsive layout, visible keyboard focus, reduced-motion support, and an app icon. Waiting stages without mounted content are labels, not dead links.
+- Verified the unchanged 1,000 USDC threshold and 4,920 USDC review-required offer, explicit human approval, and simulation-only receipt with no money moved. Offer, quote, and audit state remains volatile and process-local; no persistence changes were made.
+- All 38 tests, lint, typecheck, production build, and local production-browser smoke passed. Browser smoke covered the responsive widths, route targets, blocked/review policy states, an expiry/error response injected only in the browser, approval gating, receipt, keyboard focus, reduced motion, and redacted audit display.
+- No provider, supplier, wallet, key, live/testnet route, funds, Vercel, deployment, publication, or visibility change was used. Phase 8 remains uncommitted/unpushed for owner review; Phase 9 remains unstarted.
 
 ## 8. What not to do
 

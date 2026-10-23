@@ -18,6 +18,23 @@ import {
 } from "../domain/mandate-validation";
 
 type WorkspaceMode = "view" | "create" | "edit";
+type WorkflowStageId = "mandate" | "offers" | "policy" | "approval" | "settlement" | "evidence";
+type WorkflowStageState =
+  | "CURRENT"
+  | "COMPLETE"
+  | "WAITING"
+  | "BLOCKED"
+  | "REVIEW REQUIRED"
+  | "EXPIRED"
+  | "AVAILABLE";
+const workflowStages: { id: WorkflowStageId; number: string; label: string; href: string }[] = [
+  { id: "mandate", number: "01", label: "MANDATE", href: "#mandate-step" },
+  { id: "offers", number: "02", label: "OFFERS", href: "#offers-step" },
+  { id: "policy", number: "03", label: "POLICY", href: "#policy-step" },
+  { id: "approval", number: "04", label: "APPROVAL", href: "#approval-step" },
+  { id: "settlement", number: "05", label: "SETTLEMENT", href: "#settlement-step" },
+  { id: "evidence", number: "06", label: "EVIDENCE", href: "#evidence-step" },
+];
 type FormField =
   | "purpose"
   | "budget"
@@ -183,6 +200,10 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function errorStatus(error: unknown, fallback: string): string {
+  return `ERROR · ${error instanceof Error ? error.message : fallback}`;
+}
+
 function isThresholdReview(offer: EvaluatedSupplierOffer): boolean {
   return (
     offer.policyResult === "review" &&
@@ -225,6 +246,7 @@ export function MandateWorkspace({
   const [errors, setErrors] = useState<MandateValidationErrors>({});
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loadingAudit, setLoadingAudit] = useState(false);
   const [buyerRequest, setBuyerRequest] = useState(() =>
     initialMandates[0] ? buyerPromptForMandate(initialMandates[0]) : "",
   );
@@ -244,6 +266,58 @@ export function MandateWorkspace({
   const selectedPrivacy = privacyModes.find(
     (item) => item.value === selectedMandate?.privacyMode,
   );
+  const hasEligibleOffer = offerRun?.offers.some(canCreateSimulatedQuote) ?? false;
+  const allOffersBlocked = Boolean(
+    offerRun && offerRun.offers.length > 0 && offerRun.offers.every((offer) => offer.policyResult === "blocked"),
+  );
+  const activeWorkflowStage: WorkflowStageId =
+    mode !== "view" || !selectedMandate
+      ? "mandate"
+      : !offerRun
+        ? "offers"
+        : !settlementQuote
+          ? "policy"
+          : settlementQuote.status === "quoted"
+            ? "approval"
+            : settlementQuote.status === "approved"
+              ? "settlement"
+              : "evidence";
+  const workflowTargetAvailable: Record<WorkflowStageId, boolean> = {
+    mandate: true,
+    offers: mode === "view" && Boolean(selectedMandate),
+    policy: Boolean(offerRun),
+    approval: Boolean(offerRun),
+    settlement: Boolean(offerRun),
+    evidence: true,
+  };
+
+  function workflowStageState(stage: WorkflowStageId): WorkflowStageState {
+    switch (stage) {
+      case "mandate":
+        return mode === "view" && selectedMandate ? "COMPLETE" : "CURRENT";
+      case "offers":
+        if (mode !== "view" || !selectedMandate) return "WAITING";
+        return offerRun ? "COMPLETE" : "CURRENT";
+      case "policy":
+        if (!offerRun) return "WAITING";
+        if (!hasEligibleOffer) return allOffersBlocked ? "BLOCKED" : "REVIEW REQUIRED";
+        return settlementQuote ? "COMPLETE" : "CURRENT";
+      case "approval":
+        if (!settlementQuote) return "WAITING";
+        if (settlementExpired && settlementQuote.status === "quoted") return "EXPIRED";
+        if (settlementQuote.status === "quoted") return "CURRENT";
+        if (settlementQuote.status === "approved" || settlementQuote.status === "simulated") return "COMPLETE";
+        return "WAITING";
+      case "settlement":
+        if (!settlementQuote) return "WAITING";
+        if (settlementQuote.status === "simulated") return "COMPLETE";
+        if (settlementExpired && settlementQuote.status === "approved") return "EXPIRED";
+        return settlementQuote.status === "approved" ? "CURRENT" : "WAITING";
+      case "evidence":
+        if (settlementQuote?.receipt) return "CURRENT";
+        return auditEvents.length > 0 ? "AVAILABLE" : "WAITING";
+    }
+  }
 
   function updateField(field: FormField, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -301,6 +375,7 @@ export function MandateWorkspace({
     setApprovalConfirmed(false);
     settlementKeys.current = {};
     offerRequestKey.current = null;
+    setLoadingAudit(true);
     try {
       const response = await fetch(`/api/mandates/${encodeURIComponent(mandate.id)}`);
       const payload = (await response.json()) as SaveResponse;
@@ -312,7 +387,9 @@ export function MandateWorkspace({
         current.map((item) => (item.id === payload.mandate.id ? payload.mandate : item)),
       );
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not load the mandate.");
+      setMessage(errorStatus(error, "Could not load the mandate."));
+    } finally {
+      setLoadingAudit(false);
     }
   }
 
@@ -337,7 +414,7 @@ export function MandateWorkspace({
     const parsed = parseMandateTerms(formPayload(form));
     if (!parsed.success) {
       setErrors(parsed.errors);
-      setMessage("Some mandate fields need attention.");
+      setMessage("ERROR · Some mandate fields need attention.");
       return;
     }
 
@@ -387,7 +464,7 @@ export function MandateWorkspace({
       );
       idempotencyKey.current = null;
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "The mandate could not be saved.");
+      setMessage(errorStatus(error, "The mandate could not be saved."));
     } finally {
       setSaving(false);
     }
@@ -424,9 +501,7 @@ export function MandateWorkspace({
       setOfferMessage("Three local offers were evaluated against the saved mandate on the server; no supplier was contacted and no execution occurred.");
     } catch (error) {
       setOfferRun(null);
-      setOfferMessage(
-        error instanceof Error ? error.message : "Could not generate offer proposals.",
-      );
+      setOfferMessage(errorStatus(error, "Could not generate offer proposals."));
     } finally {
       setRunningOffers(false);
     }
@@ -447,7 +522,7 @@ export function MandateWorkspace({
         current.map((item) => (item.id === payload.mandate.id ? payload.mandate : item)),
       );
     } catch {
-      setSettlementMessage("Settlement state updated; the audit view could not be refreshed.");
+      setSettlementMessage("ERROR · Settlement state updated; the audit view could not be refreshed.");
     }
   }
 
@@ -484,7 +559,7 @@ export function MandateWorkspace({
       delete settlementKeys.current[action];
       await refreshSettlementAudit(mandateId);
     } catch (error) {
-      setSettlementMessage(error instanceof Error ? error.message : "Could not create the simulated quote.");
+      setSettlementMessage(errorStatus(error, "Could not create the simulated quote."));
     } finally {
       setSettlementWorking(false);
     }
@@ -519,7 +594,7 @@ export function MandateWorkspace({
       delete settlementKeys.current[action];
       await refreshSettlementAudit(mandateId);
     } catch (error) {
-      setSettlementMessage(error instanceof Error ? error.message : "Could not record the simulated approval.");
+      setSettlementMessage(errorStatus(error, "Could not record the simulated approval."));
     } finally {
       setSettlementWorking(false);
     }
@@ -553,7 +628,7 @@ export function MandateWorkspace({
       delete settlementKeys.current[action];
       await refreshSettlementAudit(mandateId);
     } catch (error) {
-      setSettlementMessage(error instanceof Error ? error.message : "Could not create the simulated receipt.");
+      setSettlementMessage(errorStatus(error, "Could not create the simulated receipt."));
     } finally {
       setSettlementWorking(false);
     }
@@ -575,7 +650,7 @@ export function MandateWorkspace({
       setSettlementExpired(Boolean(payload.expired));
       setSettlementMessage("Latest process-local simulated status loaded.");
     } catch (error) {
-      setSettlementMessage(error instanceof Error ? error.message : "Could not refresh simulated status.");
+      setSettlementMessage(errorStatus(error, "Could not refresh simulated status."));
     } finally {
       setSettlementWorking(false);
     }
@@ -591,8 +666,9 @@ export function MandateWorkspace({
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
         <div className="header-meta">
-          <span className="phase-tag">SIMULATED INFERENCE + SETTLEMENT / PHASE 07</span>
-          <span className="workspace-tag">DEMO WORKSPACE · VOLATILE STORAGE</span>
+          <span className="phase-tag">PHASE 08 · FRONTEND &amp; DESIGN</span>
+          <span className="workspace-tag">DEMO FINANCE WORKSPACE · NEAR NOT CONNECTED</span>
+          <span className="workspace-tag">SIMULATED FLOW · VOLATILE IN-MEMORY STATE</span>
         </div>
       </header>
 
@@ -600,19 +676,35 @@ export function MandateWorkspace({
         <p className="eyebrow">PROCUREMENT CONTROL ROOM / 01</p>
         <h1 id="page-title">Set the boundaries before spend begins.</h1>
         <p className="lead">
-          Create a mandate with explicit limits for budget, recipients, routes, and human review.
+          Agents propose. Deterministic policy decides. A human approves. This local simulation never moves funds.
         </p>
       </section>
 
       <nav className="workflow-rail" aria-label="Procurement workflow stages">
-        <span className="workflow-available">
-          <b>01</b> MANDATE
-        </span>
-        <span className="workflow-available"><b>02</b> OFFERS</span>
-        <span className="workflow-current" aria-current="step"><b>03</b> POLICY</span>
-        <span className="workflow-available"><b>04</b> APPROVAL · SIMULATED</span>
-        <span className="workflow-current" aria-current="step"><b>05</b> SETTLEMENT · SIMULATED</span>
-        <span className="workflow-available"><b>06</b> AUDIT TRAIL · AVAILABLE</span>
+        <ol>
+          {workflowStages.map((stage) => {
+            const state = workflowStageState(stage.id);
+            const content = (
+              <>
+                <span className="workflow-stage-label"><b>{stage.number}</b>{stage.label}</span>
+                <span className="workflow-stage-state">{state}</span>
+              </>
+            );
+            return (
+              <li className={`workflow-stage workflow-${state.toLowerCase().replaceAll(" ", "-")}`} key={stage.id}>
+                {workflowTargetAvailable[stage.id] ? (
+                  <a className="workflow-link" href={stage.href} aria-current={stage.id === activeWorkflowStage ? "step" : undefined}>
+                    {content}
+                  </a>
+                ) : (
+                  <span className="workflow-link" aria-disabled="true">
+                    {content}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </nav>
 
       <div className="workspace-grid">
@@ -626,7 +718,7 @@ export function MandateWorkspace({
           </button>
           <div className="mandate-list" role="list" aria-label="Saved mandates">
             {mandates.length === 0 ? (
-              <p className="empty-state">No mandates yet. Create one to begin.</p>
+              <p className="empty-state">EMPTY · No mandates yet. Create one to begin.</p>
             ) : (
               mandates.map((mandate) => (
                 <button
@@ -652,7 +744,7 @@ export function MandateWorkspace({
           </p>
         </aside>
 
-        <section className="mandate-panel" aria-labelledby="mandate-panel-title">
+        <section className="mandate-panel" id="mandate-step" aria-labelledby="mandate-panel-title">
           <div className="panel-topline">
             <div>
               <p className="eyebrow">MANDATE / {mode === "create" ? "NEW" : mode === "edit" ? "EDIT" : "DETAILS"}</p>
@@ -736,7 +828,7 @@ export function MandateWorkspace({
               </p>
             </div>
           ) : (
-            <form className="mandate-form" onSubmit={(event) => void submitForm(event)} noValidate>
+            <form className="mandate-form" onSubmit={(event) => void submitForm(event)} noValidate aria-busy={saving}>
               <p className="form-intro">
                 Every constraint is checked in your browser and revalidated by the server before it is stored.
               </p>
@@ -845,7 +937,7 @@ export function MandateWorkspace({
             </form>
           )}
           {mode === "view" && selectedMandate ? (
-            <section className="offer-workspace" aria-labelledby="offers-title">
+              <section className="offer-workspace" id="offers-step" aria-labelledby="offers-title" aria-busy={runningOffers}>
               <div className="offer-section-heading">
                 <div>
                   <p className="eyebrow">BUYER AGENT / LOCAL DETERMINISTIC FALLBACK</p>
@@ -893,13 +985,16 @@ export function MandateWorkspace({
                   <span className="offer-simulation-note">SIMULATED · NO PROVIDER OR SUPPLIER CONTACT</span>
               </div>
               {offerMessage ? (
-                <p className="offer-message" role="status" aria-live="polite">{offerMessage}</p>
+                <p className={`offer-message${offerMessage.startsWith("ERROR ·") ? " is-error" : ""}`} role={offerMessage.startsWith("ERROR ·") ? "alert" : "status"} aria-live={offerMessage.startsWith("ERROR ·") ? "assertive" : "polite"}>{offerMessage}</p>
               ) : null}
+              {runningOffers ? <p className="loading-state" role="status" aria-live="polite">LOADING · Running server-side policy checks on local offers.</p> : null}
 
               {!offerRun ? (
-                <p className="empty-state offer-empty-state">
-                  Run the comparison to inspect the typed buyer proposal, supplier evidence, and any rejected response.
-                </p>
+                !runningOffers && !offerMessage.startsWith("ERROR ·") ? (
+                  <p className="empty-state offer-empty-state">
+                    EMPTY · Run the comparison to inspect the typed buyer proposal, supplier evidence, and rejected responses.
+                  </p>
+                ) : null
               ) : (
                 <>
                   <section className="inference-status" aria-labelledby="inference-status-title">
@@ -948,7 +1043,7 @@ export function MandateWorkspace({
                     ))}
                   </section>
 
-                  <section className="offer-comparison" aria-labelledby="comparison-title">
+                  <section className="offer-comparison" id="policy-step" aria-labelledby="comparison-title">
                     <div className="offer-section-heading">
                       <div>
                         <p className="eyebrow">SUPPLIER AGENTS / THREE DETERMINISTIC FIXTURES</p>
@@ -1021,7 +1116,7 @@ export function MandateWorkspace({
                     </div>
                   </section>
 
-                  <section className="settlement-workspace" aria-labelledby="settlement-title">
+                  <section className="settlement-workspace" id="settlement-step" aria-labelledby="settlement-title" aria-busy={settlementWorking}>
                     <div className="offer-section-heading">
                       <div>
                         <p className="eyebrow">SETTLEMENT ADAPTER / LOCAL SIMULATOR</p>
@@ -1032,9 +1127,11 @@ export function MandateWorkspace({
                     <p className="settlement-disclaimer">
                       No settlement provider is called. This local lifecycle does not connect a wallet or chain, reserve or transfer funds, or create an on-chain receipt.
                     </p>
+                    <span id="approval-step" className="route-anchor" aria-hidden="true" />
+                    {settlementWorking ? <p className="loading-state" role="status" aria-live="polite">LOADING · Updating the process-local simulated settlement record.</p> : null}
                     {!settlementQuote ? (
                       <p className="empty-state settlement-empty-state">
-                        Choose a server-evaluated PASS offer or a threshold-only REVIEW offer to create a short-lived simulated quote. A REVIEW offer advances only after explicit human approval, and its policy label remains REVIEW.
+                        EMPTY · Choose a server-evaluated PASS offer or a threshold-only REVIEW offer to create a short-lived simulated quote. A REVIEW offer advances only after explicit human approval, and its policy label remains REVIEW.
                       </p>
                     ) : (
                       <div className="settlement-record">
@@ -1111,7 +1208,7 @@ export function MandateWorkspace({
                       </div>
                     )}
                     {settlementMessage ? (
-                      <p className="settlement-message" role="status" aria-live="polite">{settlementMessage}</p>
+                      <p className={`settlement-message${settlementMessage.startsWith("ERROR ·") ? " is-error" : ""}`} role={settlementMessage.startsWith("ERROR ·") ? "alert" : "status"} aria-live={settlementMessage.startsWith("ERROR ·") ? "assertive" : "polite"}>{settlementMessage}</p>
                     ) : null}
                   </section>
 
@@ -1140,16 +1237,18 @@ export function MandateWorkspace({
               )}
             </section>
           ) : null}
-          <p className="form-message" role="status" aria-live="polite">{message}</p>
+          {message ? <p className={`form-message${message.startsWith("ERROR ·") ? " is-error" : ""}`} role={message.startsWith("ERROR ·") ? "alert" : "status"} aria-live={message.startsWith("ERROR ·") ? "assertive" : "polite"}>{message}</p> : null}
         </section>
 
-        <aside className="audit-panel" aria-labelledby="audit-title">
+        <aside className="audit-panel" id="evidence-step" aria-labelledby="audit-title" aria-busy={loadingAudit}>
           <div className="section-heading">
             <p className="eyebrow">EVIDENCE</p>
             <h2 id="audit-title">Audit trail</h2>
           </div>
-          {!selectedMandate || auditEvents.length === 0 ? (
-            <p className="empty-state">Creation and changes will appear here with sensitive values redacted.</p>
+          {loadingAudit ? (
+            <p className="loading-state" role="status" aria-live="polite">LOADING · Refreshing redacted audit evidence.</p>
+          ) : !selectedMandate || auditEvents.length === 0 ? (
+            <p className="empty-state">EMPTY · Creation and changes will appear here with sensitive values redacted.</p>
           ) : (
             <ol className="audit-timeline">
               {[...auditEvents].reverse().map((event) => (
@@ -1171,7 +1270,7 @@ export function MandateWorkspace({
       </div>
 
       <footer className="footer-line workspace-footer">
-        <span>PHASE 07 · SIMULATED SETTLEMENT LIFECYCLE</span>
+        <span>PHASE 08 · FRONTEND &amp; DESIGN REVIEW</span>
         <span className="footer-note">NO PROVIDER OR SUPPLIER CONTACTED · NO WALLET OR SIGNING · NO FUNDS MOVED</span>
       </footer>
     </main>

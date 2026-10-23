@@ -4,7 +4,7 @@
 
 - Product: PrivateSpend Network, a constrained procurement workflow for small businesses. Agents may propose; deterministic constraints decide; a human retains authority before any real settlement.
 - Repository: private `Adelekejr/Private-SSD`, branch `phase-1-foundation`.
-- Phases 1–6 are committed and pushed through `dd44a99274b63ca73a73c302fcaedc402d01120f`. Phase 7 is implemented locally for owner review and remains uncommitted/unpushed.
+- Phases 1–7 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 frontend/design work is complete locally for owner review and remains uncommitted/unpushed.
 - Phase 3 provides responsive mandate creation/editing, shared browser/server validation, `GET`/`POST /api/mandates` and `GET`/`PUT /api/mandates/:id`, typed constraint construction, process-local idempotency, and redacted create/update audit events.
 - Phase 4 adds a deterministic buyer-request parser that proposes typed constraints without changing the saved mandate; three deterministic local supplier fixtures; strict offer-response validation; a rejected prompt-injection fixture; evidence and unverified supplier risk notes; and the simulated offers API.
 - Phase 5 adds deterministic server policy evaluation for budget, asset, unit price, approved recipient, allowed destination, reliability, expiry, nonce replay, and approval threshold. It distinguishes `blocked`, `review`, and `pass`; missing configured unit price requires review. Policy evidence is kept separate from supplier risk notes.
@@ -18,13 +18,14 @@
 - Phase 5 review evidence: all 32 tests passed; lint, typecheck, build, and local production-server smoke passed; policy outcomes and replay/conflict behavior were confirmed.
 - Phase 6 evidence: all 34 tests passed; lint, typecheck, build, and local production-server smoke passed. A unique sensitive marker was absent from captured application logs and API response; health reported `private-ai-simulation`.
 - Phase 7 verification (2026-10-23): `npm test` passed all 38 tests; `npm run lint`, `npm run typecheck`, and `npm run build` passed. A local production-server smoke test confirmed health phase `settlement-simulation`; threshold 1,000 USDC; offer results `blocked`, `blocked`, `review`; 4,920 USDC review offer; blocked quote rejection; explicit approval requirement; refusal to execute before approval; successful simulated status/receipt; and `moneyMoved: false`. The local server was stopped afterward.
-- Phase 7 remains uncommitted/unpushed. No Vercel connection/change, deployment, publication, repository visibility change, provider call, supplier call, wallet, live/testnet route, or funds were used.
+- Phase 7 was committed and pushed by the coordinator at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 is complete locally; no Phase 8 commit or push is authorized.
+- Phase 8 verification (2026-10-23): all 38 tests, lint, typecheck, build, and production-browser smoke passed. The smoke covered the six-stage route and mounted targets, empty/loading/error/blocked/review/expired states, explicit approval, simulation-only receipt, redacted evidence, 320/375px layouts, keyboard focus, and reduced motion. The error/expiry responses were browser-injected only. Settlement state remains volatile/in-memory; Phase 9 is unstarted and Phase 8 remains uncommitted/unpushed for owner review.
 
 ## Important scope and source notes
 
-- The current owner instruction authorizes the Phase 7 local simulated settlement slice only. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Keep Phase 7 uncommitted/unpushed; stop for owner review and do not start Phase 8. Do not call or integrate external providers, wallets, live/testnet routes, connect or modify Vercel, deploy, publish, or change repository visibility.
+- The current owner instruction authorized Phase 8 frontend/design work, which is now complete locally. Preserve the 1,000 USDC threshold and 4,920 USDC demo offer; only a threshold-only `REVIEW REQUIRED` outcome may advance after explicit human approval. Keep Phase 8 uncommitted/unpushed and stop before Phase 9. Do not call or integrate external providers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
 - Phase 4 was committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`; Phase 6 was committed and pushed at `dd44a99274b63ca73a73c302fcaedc402d01120f`.
-- The original five source PDFs under `/home/ubuntu/upload/` were cross-checked against the Phase 5, Phase 6, and Phase 7 checklists. Phase 7 follows the simulation-first boundary and keeps external provider and testnet routes out of the current slice.
+- The original five source PDFs under `/home/ubuntu/upload/` were cross-checked against the Phase 5, Phase 6, Phase 7, and Phase 8 checklists. Phase 8 follows the simulation-first boundary and keeps external provider and testnet routes out of scope.
 - `docs/agent-pack/05-AGENT-MEMORY.md` contains a historical claim about an existing PrivateSpend dashboard that conflicts with the verified repository baseline. Treat it as historical source context, not as current implementation evidence. Do not search InvoiceLens for reusable code or assume an earlier PrivateSpend implementation exists.
 - Do not copy or import code from InvoiceLens. This repository is separate.
 
@@ -41,4 +42,4 @@
 
 ## Next step
 
-Stop after the Phase 7 local simulation slice for Adeleke's review. Do not commit, push, connect Vercel, deploy, publish, change repository visibility, or begin Phase 8 without separate explicit approval.
+Phase 8 frontend/design work is complete and verified locally. Stop for Adeleke’s review. Do not commit or push Phase 8, start Phase 9/10, call providers, use wallets/live/testnet routes/funds, connect or modify Vercel, deploy, publish, or change repository visibility.

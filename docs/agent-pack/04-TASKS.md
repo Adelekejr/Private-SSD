@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phases 1–6 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `dd44a99274b63ca73a73c302fcaedc402d01120f`. Adeleke authorized the Phase 7 local simulated settlement slice only. Keep Phase 7 uncommitted and unpushed; stop after this slice and do not begin Phase 8. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Only threshold-only `REVIEW REQUIRED` may proceed after explicit human approval; blocked and unrelated review outcomes remain ineligible. No provider, wallet, live/testnet, Vercel, deployment, publication, or visibility action is authorized. This overrides stale phase notes and the source memory's generic checkpoint-commit suggestion.
+**Current scope rule (2026-10-23):** Phases 1–7 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 frontend/design work is complete locally for owner review. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only a threshold-only `REVIEW REQUIRED` offer may proceed after explicit human approval. Keep Phase 8 uncommitted and unpushed, stop here, and do not begin Phase 9. Do not call or integrate providers, suppliers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -139,16 +139,26 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - The server revalidates quote and offer expiry, destination chain, amount/budget, asset, recipient allowlist, and unchanged policy immediately before creating a simulated receipt. Quote/status/approval records and nonce/idempotency state are process-local and volatile; audit entries are redacted and omit raw recipient/amount data.
 - `npm test` passed all 38 tests, including threshold-review approval, blocked and unrelated-review rejection, explicit API approval, no pre-approval execution, quote expiry, changed mandate amount/asset/destination/recipient, simulated receipt honesty, and audit events. `npm run lint`, `npm run typecheck`, and `npm run build` passed.
 - A local production-server smoke test confirmed health phase `settlement-simulation`, 1,000 USDC threshold, outcomes `blocked`/`blocked`/`review`, 4,920 USDC REVIEW offer, blocked quote rejection (`422`), unconfirmed approval rejection (`400`), pre-approval execution rejection (`403`), successful explicit approval and simulated status, and receipt `moneyMoved: false`. The local server was stopped after the smoke check.
-- No external provider, supplier, wallet, key, live route, testnet, mainnet, funds, Vercel change, deployment, publication, or repository visibility change was used. No provider/testnet path is implemented. Phase 7 remains local and uncommitted/unpushed; stop here for owner review.
+- No external provider, supplier, wallet, key, live route, testnet, mainnet, funds, Vercel change, deployment, publication, or repository visibility change was used. No provider/testnet path is implemented. Phase 7 was subsequently committed and pushed by the coordinator at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`; Phase 8 is complete locally for owner review and remains uncommitted/unpushed.
 
 ## 10. Phase 8 — frontend and design
 
-- [ ] Implement the route `MANDATE → OFFERS → POLICY → APPROVAL → SETTLEMENT → EVIDENCE`.
-- [ ] Apply `03-DESIGN.md` without hiding policy and audit information.
-- [ ] Add empty, loading, blocked, expired, and error states.
-- [ ] Add responsive mobile layout.
-- [ ] Add keyboard focus and reduced-motion behavior.
-- [ ] Confirm every state includes a text label.
+- [x] Implement the route `MANDATE → OFFERS → POLICY → APPROVAL → SETTLEMENT → EVIDENCE`.
+- [x] Apply `03-DESIGN.md` without hiding policy and audit information.
+- [x] Add empty, loading, blocked, expired, and error states.
+- [x] Add responsive mobile layout.
+- [x] Add keyboard focus and reduced-motion behavior.
+- [x] Confirm every state includes a text label.
+
+### Phase 8 evidence (2026-10-23)
+
+- Refined the existing mandate workspace instead of replacing it. The route `MANDATE → OFFERS → POLICY → APPROVAL → SETTLEMENT → EVIDENCE` reports explicit text state labels; links resolve only while their target panels are mounted, and unavailable future steps remain visibly `WAITING` without dead links.
+- Applied the supplied design system with a compact route rail, clear loading/empty/error feedback, retained policy and redacted audit evidence, and explicit labels for blocked, review-required, expired, approved, simulated, and completed outcomes. Added a simple app icon that matches the existing workspace mark.
+- Kept the 1,000 USDC approval threshold and 4,920 USDC Ember Compute offer unchanged. The offer remains `REVIEW REQUIRED`; approval is an explicit human checkbox/action and does not rewrite policy. The simulated receipt says no money moved.
+- Responsive/accessibility smoke checks passed at 375px and 320px with no horizontal overflow; keyboard focus was visible with a 3px outline; `prefers-reduced-motion` disabled transition and smooth-scroll motion.
+- `npm test` passed all 38 tests; `npm run lint`, `npm run typecheck`, and `npm run build` passed. The local production health endpoint returned `settlement-simulation`; the app and generated icon responded successfully.
+- Production-browser smoke passed for the empty offers panel, delayed loading state, three local offers (two blocked, one threshold review), policy label, quote expiry, unconfirmed approval gate, explicit approval, simulated receipt, redacted audit evidence, API-error text label, all rendered route targets, mobile widths, keyboard focus, and reduced motion. Expiry and the 503 error were browser-only injected responses; they did not alter the local settlement service. The one observed 503 network/console warning was the intentional error-state test.
+- Settlement/offer/audit/idempotency state remains volatile and process-local, not production-durable; Phase 8 did not change persistence or server policy. No provider, supplier, wallet, key, live/testnet route, funds, Vercel connection/change, deployment, publication, or repository visibility change was used. Phase 9 remains unstarted; Phase 8 remains uncommitted/unpushed for owner review.
 
 ## 11. Phase 9 — validation
 
