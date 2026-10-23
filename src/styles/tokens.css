@@ -1,0 +1,15 @@
+:root {
+  --surface: #fafaf8;
+  --surface-white: #ffffff;
+  --ink: #111111;
+  --secondary: #666666;
+  --muted: #969696;
+  --line: #dcdcdc;
+  --soft: #f4f4f1;
+  --green: #16d96b;
+  --green-readable: #087a43;
+  --review: #b77b2a;
+  --blocked: #b84e46;
+  --grid: rgb(17 17 17 / 3.2%);
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
