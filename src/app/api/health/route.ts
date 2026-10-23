@@ -4,6 +4,6 @@ export function GET() {
   return Response.json({
     status: "ok",
     service: "privatespend-network",
-    phase: "private-ai-simulation",
+    phase: "settlement-simulation",
   });
 }

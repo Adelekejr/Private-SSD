@@ -8,6 +8,7 @@ import type {
   EvaluatedSupplierOffer,
   PrivacyMode,
   ProcurementMandate,
+  SimulatedSettlementQuote,
 } from "../domain/models";
 import type { InferenceStatus } from "../domain/inference";
 import type { BuyerRequestProposal } from "../domain/buyer-request-parser";
@@ -37,6 +38,7 @@ type SaveResponse = {
 type OfferRunResponse = {
   mode: "SIMULATED";
   policyAuthority: "SERVER";
+  offerRunId: string;
   inferenceStatus: InferenceStatus;
   idempotency?: "NEW" | "REPLAYED";
   buyerProposal: BuyerRequestProposal;
@@ -46,6 +48,12 @@ type OfferRunResponse = {
     fixtureType: "prompt-injection" | "malformed-response";
     reason: string;
   }>;
+  error?: string;
+};
+type SettlementResponse = {
+  quote: SimulatedSettlementQuote;
+  disposition?: "created" | "approved" | "simulated" | "replayed" | "unchanged";
+  expired?: boolean;
   error?: string;
 };
 
@@ -175,6 +183,19 @@ function formatDate(value: string): string {
   }).format(new Date(value));
 }
 
+function isThresholdReview(offer: EvaluatedSupplierOffer): boolean {
+  return (
+    offer.policyResult === "review" &&
+    offer.policyEvaluation.approvalRequired &&
+    offer.policyEvaluation.reasons.length === 1 &&
+    offer.policyEvaluation.reasons[0]?.toLowerCase().includes("approval threshold") === true
+  );
+}
+
+function canCreateSimulatedQuote(offer: EvaluatedSupplierOffer): boolean {
+  return offer.policyResult === "pass" || isThresholdReview(offer);
+}
+
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
     <span className="field-error" id={id}>
@@ -210,8 +231,14 @@ export function MandateWorkspace({
   const [offerRun, setOfferRun] = useState<OfferRunResponse | null>(null);
   const [offerMessage, setOfferMessage] = useState("");
   const [runningOffers, setRunningOffers] = useState(false);
+  const [settlementQuote, setSettlementQuote] = useState<SimulatedSettlementQuote | null>(null);
+  const [settlementExpired, setSettlementExpired] = useState(false);
+  const [settlementMessage, setSettlementMessage] = useState("");
+  const [settlementWorking, setSettlementWorking] = useState(false);
+  const [approvalConfirmed, setApprovalConfirmed] = useState(false);
   const idempotencyKey = useRef<string | null>(null);
   const offerRequestKey = useRef<string | null>(null);
+  const settlementKeys = useRef<Record<string, string>>({});
 
   const selectedMandate = mandates.find((mandate) => mandate.id === selectedId) ?? null;
   const selectedPrivacy = privacyModes.find(
@@ -232,6 +259,11 @@ export function MandateWorkspace({
     setMessage("");
     setOfferRun(null);
     setOfferMessage("");
+    setSettlementQuote(null);
+    setSettlementExpired(false);
+    setSettlementMessage("");
+    setApprovalConfirmed(false);
+    settlementKeys.current = {};
     offerRequestKey.current = null;
     setBuyerRequest("");
     idempotencyKey.current = null;
@@ -245,6 +277,11 @@ export function MandateWorkspace({
     setMessage("");
     setOfferRun(null);
     setOfferMessage("");
+    setSettlementQuote(null);
+    setSettlementExpired(false);
+    setSettlementMessage("");
+    setApprovalConfirmed(false);
+    settlementKeys.current = {};
     offerRequestKey.current = null;
     idempotencyKey.current = null;
   }
@@ -258,6 +295,11 @@ export function MandateWorkspace({
     setBuyerRequest(buyerPromptForMandate(mandate));
     setOfferRun(null);
     setOfferMessage("");
+    setSettlementQuote(null);
+    setSettlementExpired(false);
+    setSettlementMessage("");
+    setApprovalConfirmed(false);
+    settlementKeys.current = {};
     offerRequestKey.current = null;
     try {
       const response = await fetch(`/api/mandates/${encodeURIComponent(mandate.id)}`);
@@ -355,6 +397,11 @@ export function MandateWorkspace({
     if (!selectedMandate) return;
     setRunningOffers(true);
     setOfferMessage("");
+    setSettlementQuote(null);
+    setSettlementExpired(false);
+    setSettlementMessage("");
+    setApprovalConfirmed(false);
+    settlementKeys.current = {};
     offerRequestKey.current ??= globalThis.crypto.randomUUID();
     try {
       const response = await fetch(
@@ -385,6 +432,155 @@ export function MandateWorkspace({
     }
   }
 
+  function settlementRequestKey(action: string): string {
+    settlementKeys.current[action] ??= globalThis.crypto.randomUUID();
+    return settlementKeys.current[action]!;
+  }
+
+  async function refreshSettlementAudit(mandateId: string) {
+    try {
+      const response = await fetch(`/api/mandates/${encodeURIComponent(mandateId)}`);
+      const payload = (await response.json()) as SaveResponse;
+      if (!response.ok) return;
+      setAuditEvents(payload.auditEvents);
+      setMandates((current) =>
+        current.map((item) => (item.id === payload.mandate.id ? payload.mandate : item)),
+      );
+    } catch {
+      setSettlementMessage("Settlement state updated; the audit view could not be refreshed.");
+    }
+  }
+
+  async function createSimulatedQuote(offerId: string) {
+    if (!selectedMandate || !offerRun) return;
+    const mandateId = selectedMandate.id;
+    const action = `quote:${mandateId}:${offerRun.offerRunId}:${offerId}`;
+    setSettlementWorking(true);
+    setSettlementMessage("");
+    try {
+      const response = await fetch(
+        `/api/mandates/${encodeURIComponent(mandateId)}/settlement/quote`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": settlementRequestKey(action),
+          },
+          body: JSON.stringify({
+            mode: "SIMULATED",
+            offerRunId: offerRun.offerRunId,
+            offerId,
+          }),
+        },
+      );
+      const payload = (await response.json()) as SettlementResponse;
+      if (!response.ok || !payload.quote) {
+        throw new Error(payload.error ?? "Could not create the simulated quote.");
+      }
+      setSettlementQuote(payload.quote);
+      setSettlementExpired(Boolean(payload.expired));
+      setApprovalConfirmed(false);
+      setSettlementMessage("Simulated quote created. No provider, wallet, chain, or funds were used.");
+      delete settlementKeys.current[action];
+      await refreshSettlementAudit(mandateId);
+    } catch (error) {
+      setSettlementMessage(error instanceof Error ? error.message : "Could not create the simulated quote.");
+    } finally {
+      setSettlementWorking(false);
+    }
+  }
+
+  async function approveSimulatedQuote() {
+    if (!selectedMandate || !settlementQuote || !approvalConfirmed) return;
+    const mandateId = selectedMandate.id;
+    const action = `approve:${mandateId}:${settlementQuote.id}`;
+    setSettlementWorking(true);
+    setSettlementMessage("");
+    try {
+      const response = await fetch(
+        `/api/mandates/${encodeURIComponent(mandateId)}/settlement/${encodeURIComponent(settlementQuote.id)}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": settlementRequestKey(action),
+          },
+          body: JSON.stringify({ mode: "SIMULATED", confirmed: true }),
+        },
+      );
+      const payload = (await response.json()) as SettlementResponse;
+      if (!response.ok || !payload.quote) {
+        throw new Error(payload.error ?? "Could not record the simulated approval.");
+      }
+      setSettlementQuote(payload.quote);
+      setSettlementExpired(Boolean(payload.expired));
+      setApprovalConfirmed(false);
+      setSettlementMessage("Human approval recorded for simulation only. No transaction was signed.");
+      delete settlementKeys.current[action];
+      await refreshSettlementAudit(mandateId);
+    } catch (error) {
+      setSettlementMessage(error instanceof Error ? error.message : "Could not record the simulated approval.");
+    } finally {
+      setSettlementWorking(false);
+    }
+  }
+
+  async function runSimulatedExecution() {
+    if (!selectedMandate || !settlementQuote) return;
+    const mandateId = selectedMandate.id;
+    const action = `execute:${mandateId}:${settlementQuote.id}`;
+    setSettlementWorking(true);
+    setSettlementMessage("");
+    try {
+      const response = await fetch(
+        `/api/mandates/${encodeURIComponent(mandateId)}/settlement/${encodeURIComponent(settlementQuote.id)}/execute`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": settlementRequestKey(action),
+          },
+          body: JSON.stringify({ mode: "SIMULATED", simulateOnly: true }),
+        },
+      );
+      const payload = (await response.json()) as SettlementResponse;
+      if (!response.ok || !payload.quote) {
+        throw new Error(payload.error ?? "Could not create the simulated receipt.");
+      }
+      setSettlementQuote(payload.quote);
+      setSettlementExpired(Boolean(payload.expired));
+      setSettlementMessage("Simulation finished. Its receipt confirms that no money moved.");
+      delete settlementKeys.current[action];
+      await refreshSettlementAudit(mandateId);
+    } catch (error) {
+      setSettlementMessage(error instanceof Error ? error.message : "Could not create the simulated receipt.");
+    } finally {
+      setSettlementWorking(false);
+    }
+  }
+
+  async function refreshSimulatedStatus() {
+    if (!selectedMandate || !settlementQuote) return;
+    setSettlementWorking(true);
+    setSettlementMessage("");
+    try {
+      const response = await fetch(
+        `/api/mandates/${encodeURIComponent(selectedMandate.id)}/settlement/${encodeURIComponent(settlementQuote.id)}`,
+      );
+      const payload = (await response.json()) as SettlementResponse;
+      if (!response.ok || !payload.quote) {
+        throw new Error(payload.error ?? "Could not refresh simulated status.");
+      }
+      setSettlementQuote(payload.quote);
+      setSettlementExpired(Boolean(payload.expired));
+      setSettlementMessage("Latest process-local simulated status loaded.");
+    } catch (error) {
+      setSettlementMessage(error instanceof Error ? error.message : "Could not refresh simulated status.");
+    } finally {
+      setSettlementWorking(false);
+    }
+  }
+
   return (
     <main className="site-shell workspace-shell">
       <header className="topline">
@@ -395,7 +591,7 @@ export function MandateWorkspace({
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
         <div className="header-meta">
-          <span className="phase-tag">PRIVATE / SIMULATED INFERENCE / PHASE 06</span>
+          <span className="phase-tag">SIMULATED INFERENCE + SETTLEMENT / PHASE 07</span>
           <span className="workspace-tag">DEMO WORKSPACE · VOLATILE STORAGE</span>
         </div>
       </header>
@@ -414,8 +610,8 @@ export function MandateWorkspace({
         </span>
         <span className="workflow-available"><b>02</b> OFFERS</span>
         <span className="workflow-current" aria-current="step"><b>03</b> POLICY</span>
-        <span className="workflow-future"><b>04</b> APPROVAL · LATER PHASE</span>
-        <span className="workflow-future"><b>05</b> SETTLEMENT · LATER PHASE</span>
+        <span className="workflow-available"><b>04</b> APPROVAL · SIMULATED</span>
+        <span className="workflow-current" aria-current="step"><b>05</b> SETTLEMENT · SIMULATED</span>
         <span className="workflow-available"><b>06</b> AUDIT TRAIL · AVAILABLE</span>
       </nav>
 
@@ -536,7 +732,7 @@ export function MandateWorkspace({
                 <span>{selectedPrivacy?.note ?? "This value is stored as a mandate preference only."}</span>
               </div>
               <p className="phase-boundary">
-                Offers are proposals only. This phase uses a deterministic local fallback, not a private AI provider; human approval and settlement are not implemented here.
+                Offer evaluation is deterministic and local. Approval and settlement below are explicit simulations; no provider, wallet, chain, or funds are involved.
               </p>
             </div>
           ) : (
@@ -673,6 +869,11 @@ export function MandateWorkspace({
                     setBuyerRequest(event.target.value);
                     setOfferRun(null);
                     setOfferMessage("");
+                    setSettlementQuote(null);
+                    setSettlementExpired(false);
+                    setSettlementMessage("");
+                    setApprovalConfirmed(false);
+                    settlementKeys.current = {};
                     offerRequestKey.current = null;
                   }}
                 />
@@ -781,8 +982,12 @@ export function MandateWorkspace({
                             {offer.policyEvaluation.reasons.length > 0 ? (
                               <ul>{offer.policyEvaluation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
                             ) : <p>All configured deterministic policy checks passed.</p>}
-                            {offer.policyEvaluation.approvalRequired ? (
-                              <p className="policy-approval-note">HUMAN APPROVAL REQUIRED · No approval action is available in this phase.</p>
+                            {offer.policyEvaluation.result === "review" ? (
+                              <p className="policy-approval-note">
+                                {isThresholdReview(offer)
+                                  ? "REVIEW REQUIRED · This threshold-only outcome can advance only after explicit human approval; its policy result remains REVIEW."
+                                  : "REVIEW REQUIRED · This outcome has an unresolved review issue and cannot advance in the simulator."}
+                              </p>
                             ) : null}
                           </div>
                           <div className="offer-evidence-group">
@@ -795,9 +1000,119 @@ export function MandateWorkspace({
                               <ul>{offer.riskReasons.map((item) => <li key={item}>{item}</li>)}</ul>
                             ) : <p>No supplier risk notes provided.</p>}
                           </div>
+                          {canCreateSimulatedQuote(offer) ? (
+                            <button
+                              className="button button-secondary settlement-quote-button"
+                              type="button"
+                              onClick={() => void createSimulatedQuote(offer.id)}
+                              disabled={settlementWorking || Boolean(settlementQuote)}
+                            >
+                              {settlementWorking ? "Checking current policy…" : "Create SIMULATED quote"}
+                            </button>
+                          ) : (
+                            <p className="policy-approval-note">
+                              {offer.policyResult === "blocked"
+                                ? "BLOCKED · This offer is ineligible for quote, approval, and simulation."
+                                : "REVIEW REQUIRED · This review is not a threshold-only approval case, so it cannot advance."}
+                            </p>
+                          )}
                         </article>
                       ))}
                     </div>
+                  </section>
+
+                  <section className="settlement-workspace" aria-labelledby="settlement-title">
+                    <div className="offer-section-heading">
+                      <div>
+                        <p className="eyebrow">SETTLEMENT ADAPTER / LOCAL SIMULATOR</p>
+                        <h4 id="settlement-title">Quote, approval, and receipt</h4>
+                      </div>
+                      <span className="state-pill">SIMULATED ONLY</span>
+                    </div>
+                    <p className="settlement-disclaimer">
+                      No settlement provider is called. This local lifecycle does not connect a wallet or chain, reserve or transfer funds, or create an on-chain receipt.
+                    </p>
+                    {!settlementQuote ? (
+                      <p className="empty-state settlement-empty-state">
+                        Choose a server-evaluated PASS offer or a threshold-only REVIEW offer to create a short-lived simulated quote. A REVIEW offer advances only after explicit human approval, and its policy label remains REVIEW.
+                      </p>
+                    ) : (
+                      <div className="settlement-record">
+                        <div className="settlement-record-heading">
+                          <span className={`state-pill ${settlementQuote.status === "simulated" ? "state-pass" : settlementExpired ? "state-blocked" : "state-review"}`}>
+                            {settlementQuote.status === "simulated" ? "SIMULATED" : settlementExpired ? "EXPIRED" : settlementQuote.status.toUpperCase()}
+                          </span>
+                          <span className="mono settlement-id">{settlementQuote.id}</span>
+                        </div>
+                        <dl className="settlement-facts">
+                          <div><dt>Policy result</dt><dd>{settlementQuote.policyResult === "review" ? "REVIEW REQUIRED · human approval gate" : "PASS"} · rechecked on server</dd></div>
+                          <div><dt>Human approval</dt><dd>{settlementQuote.approvalStatus.toUpperCase()}</dd></div>
+                          <div><dt>Supplier</dt><dd>{settlementQuote.offer.supplierAgent}</dd></div>
+                          <div><dt>Amount / asset</dt><dd>{formatMoney(settlementQuote.amount, settlementQuote.asset)}</dd></div>
+                          <div><dt>Destination</dt><dd>{settlementQuote.destinationChain}</dd></div>
+                          <div><dt>Recipient</dt><dd>{settlementQuote.recipient}</dd></div>
+                          <div><dt>Offer expires</dt><dd>{formatDate(settlementQuote.offerExpiresAt)}</dd></div>
+                          <div><dt>Quote expires</dt><dd>{formatDate(settlementQuote.quoteExpiresAt)}</dd></div>
+                        </dl>
+                        {settlementQuote.status === "quoted" && !settlementExpired ? (
+                          <div className="settlement-approval">
+                            <label className="settlement-confirmation">
+                              <input
+                                type="checkbox"
+                                checked={approvalConfirmed}
+                                onChange={(event) => setApprovalConfirmed(event.target.checked)}
+                              />
+                              <span>I reviewed the displayed terms and approve this SIMULATED outcome only.</span>
+                            </label>
+                            <button
+                              className="button button-primary"
+                              type="button"
+                              onClick={() => void approveSimulatedQuote()}
+                              disabled={settlementWorking || !approvalConfirmed}
+                            >
+                              {settlementWorking ? "Recording approval…" : "Approve simulated quote"}
+                            </button>
+                          </div>
+                        ) : null}
+                        {settlementExpired && settlementQuote.status !== "simulated" ? (
+                          <p className="settlement-warning">This quote has expired. Run a new simulated offer comparison to start again.</p>
+                        ) : null}
+                        {settlementQuote.status === "approved" && !settlementExpired ? (
+                          <button
+                            className="button button-primary"
+                            type="button"
+                            onClick={() => void runSimulatedExecution()}
+                            disabled={settlementWorking}
+                          >
+                            {settlementWorking ? "Running simulation…" : "Run simulated execution"}
+                          </button>
+                        ) : null}
+                        {settlementQuote.receipt ? (
+                          <section className="simulation-receipt" aria-labelledby="receipt-title">
+                            <p className="eyebrow">SIMULATED RECEIPT · NOT ON-CHAIN</p>
+                            <h5 id="receipt-title">No money moved</h5>
+                            <p>{settlementQuote.receipt.message}</p>
+                            <dl className="settlement-facts">
+                              <div><dt>Receipt ID</dt><dd className="mono">{settlementQuote.receipt.id}</dd></div>
+                              <div><dt>Issued</dt><dd>{formatDate(settlementQuote.receipt.issuedAt)}</dd></div>
+                              <div><dt>Funds moved</dt><dd>NO</dd></div>
+                              <div><dt>Wallet / chain used</dt><dd>NO</dd></div>
+                            </dl>
+                          </section>
+                        ) : null}
+                        <button
+                          className="button button-secondary"
+                          type="button"
+                          onClick={() => void refreshSimulatedStatus()}
+                          disabled={settlementWorking}
+                        >
+                          Refresh simulated status
+                        </button>
+                      </div>
+                    )}
+                    {settlementMessage ? (
+                      <p className="settlement-message" role="status" aria-live="polite">{settlementMessage}</p>
+                    ) : null}
                   </section>
 
                   <section className="rejected-responses" aria-labelledby="rejected-title">
@@ -819,7 +1134,7 @@ export function MandateWorkspace({
                     ) : null}
                   </section>
                   <p className="phase-boundary">
-                    These are local demo proposals. Policy outcomes are deterministic and computed on the server from the saved mandate; supplier risk notes remain unverified. No approval or execution action exists.
+                    These are local demo proposals. Policy outcomes are deterministic and computed on the server from the saved mandate; supplier risk notes remain unverified. A threshold-only REVIEW outcome needs explicit human approval before the simulation can advance; BLOCKED and other REVIEW outcomes remain ineligible.
                   </p>
                 </>
               )}
@@ -856,8 +1171,8 @@ export function MandateWorkspace({
       </div>
 
       <footer className="footer-line workspace-footer">
-        <span>PHASE 06 · PRIVATE / SIMULATED INFERENCE</span>
-        <span className="footer-note">NO SUPPLIERS CONTACTED · NO APPROVAL OR EXECUTION · NO FUNDS MOVED</span>
+        <span>PHASE 07 · SIMULATED SETTLEMENT LIFECYCLE</span>
+        <span className="footer-note">NO PROVIDER OR SUPPLIER CONTACTED · NO WALLET OR SIGNING · NO FUNDS MOVED</span>
       </footer>
     </main>
   );

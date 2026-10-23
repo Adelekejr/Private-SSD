@@ -93,6 +93,23 @@ export class InMemoryProcurementRepository implements ProcurementRepository {
     );
   }
 
+  async recordAuditEvent(event: {
+    mandateId: string;
+    actor: AuditEvent["actor"];
+    eventType: AuditEventType;
+    summary: string;
+    occurredAt?: string;
+  }): Promise<AuditEvent> {
+    if (!this.mandates.has(event.mandateId)) {
+      throw new RepositoryEntityNotFoundError("mandate", event.mandateId);
+    }
+    this.appendAuditEvent({
+      ...event,
+      occurredAt: event.occurredAt ?? new Date().toISOString(),
+    });
+    return structuredClone(this.auditEvents.at(-1)!);
+  }
+
   async createMandate(
     input: NewProcurementMandate,
     idempotencyKey: string,

@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phase 4 was committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phases 1–5 are committed and pushed. Adeleke authorized Phase 6 local implementation/review only. Keep Phase 6 uncommitted and unpushed; do not start Phase 7 or later, connect or modify Vercel, publish, deploy, or change repository visibility. This overrides the source memory's generic checkpoint-commit suggestion.
+**Current scope rule (2026-10-23):** Phases 1–6 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `dd44a99274b63ca73a73c302fcaedc402d01120f`. Adeleke authorized the Phase 7 local simulated settlement slice only. Keep Phase 7 uncommitted and unpushed; stop after this slice and do not begin Phase 8. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Only threshold-only `REVIEW REQUIRED` may proceed after explicit human approval; blocked and unrelated review outcomes remain ineligible. No provider, wallet, live/testnet, Vercel, deployment, publication, or visibility action is authorized. This overrides stale phase notes and the source memory's generic checkpoint-commit suggestion.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -121,16 +121,25 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - No NEAR AI credential was available in the supplied saved-secret inventory or environment variables. No provider SDK, gateway integration, provider call, verification, or attestation was added or claimed; the conditional live integration remains deferred.
 - The route writes no request text to application logs, returns a generic processing error instead of exception text, and the existing idempotency store retains only a digest of the buyer request. Tests capture console output and verify a unique sensitive marker is absent from both logs and the API response; the local production-server smoke request confirmed the same marker was absent from server output.
 - `npm test` passed all 34 tests, including deterministic fallback/provenance and sensitive-text log/response checks. `npm run lint`, `npm run typecheck`, and `npm run build` passed. A local production-server smoke check confirmed health phase `private-ai-simulation`, Phase 6 privacy copy, a successful simulated offer response, no provider contact, and verification/attestation `not_performed`; the server was stopped afterward.
-- Phase 6 remains local and uncommitted/unpushed for owner review. No Vercel connection/change, deployment, publication, repository visibility change, external provider call, wallet, settlement, or funds were used.
+- Phase 6 was committed and pushed by the coordinator to `phase-1-foundation` at `dd44a99274b63ca73a73c302fcaedc402d01120f`. No Vercel connection/change, deployment, publication, repository visibility change, external provider call, wallet, settlement, or funds were used in Phase 6.
 
 ## 9. Phase 7 — settlement
 
-- [ ] Add a settlement adapter interface.
-- [ ] Add simulated quote, approval, execution, status, and receipt lifecycle.
-- [ ] If a reliable route is available, add a NEAR Intents/1Click quote and status path.
-- [ ] Validate quote expiry, destination, amount, asset, and recipient.
-- [ ] Add testnet path only after the simulated path is stable.
-- [ ] Never expose settlement keys in browser code.
+- [x] Add a settlement adapter interface.
+- [x] Add simulated quote, approval, execution, status, and receipt lifecycle.
+- [ ] If a reliable route is available, add a NEAR Intents/1Click quote and status path. (Deferred; no provider calls or integration in this owner-approved slice.)
+- [x] Validate quote expiry, destination, amount, asset, and recipient.
+- [ ] Add testnet path only after the simulated path is stable. (Not in scope; no live or testnet activity.)
+- [x] Never expose settlement keys in browser code. (No settlement key or provider credential was added.)
+
+### Phase 7 evidence (2026-10-23)
+
+- Added a provider-neutral settlement adapter interface and a separate process-local simulator. The API exposes simulated quote creation, explicit human approval, simulated execution, status refresh, and a receipt that is marked `SIMULATED`, `moneyMoved: false`, and not on-chain. All endpoint payloads and UI controls are explicitly simulation-only.
+- The server accepts an opaque offer-run ID created with server-computed offers; browser-supplied amounts, recipients, or policy results are not settlement authority. Quote eligibility is limited to current `PASS` outcomes or the single threshold-only `REVIEW REQUIRED` outcome. The seeded threshold remains 1,000 USDC and Ember Compute remains 4,920 USDC. That offer's policy label stays `REVIEW` before and after approval; execution is refused until an explicit human approval is recorded. Blocked offers and other reviews, including a missing configured unit price, are rejected.
+- The server revalidates quote and offer expiry, destination chain, amount/budget, asset, recipient allowlist, and unchanged policy immediately before creating a simulated receipt. Quote/status/approval records and nonce/idempotency state are process-local and volatile; audit entries are redacted and omit raw recipient/amount data.
+- `npm test` passed all 38 tests, including threshold-review approval, blocked and unrelated-review rejection, explicit API approval, no pre-approval execution, quote expiry, changed mandate amount/asset/destination/recipient, simulated receipt honesty, and audit events. `npm run lint`, `npm run typecheck`, and `npm run build` passed.
+- A local production-server smoke test confirmed health phase `settlement-simulation`, 1,000 USDC threshold, outcomes `blocked`/`blocked`/`review`, 4,920 USDC REVIEW offer, blocked quote rejection (`422`), unconfirmed approval rejection (`400`), pre-approval execution rejection (`403`), successful explicit approval and simulated status, and receipt `moneyMoved: false`. The local server was stopped after the smoke check.
+- No external provider, supplier, wallet, key, live route, testnet, mainnet, funds, Vercel change, deployment, publication, or repository visibility change was used. No provider/testnet path is implemented. Phase 7 remains local and uncommitted/unpushed; stop here for owner review.
 
 ## 10. Phase 8 — frontend and design
 

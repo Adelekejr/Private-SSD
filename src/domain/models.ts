@@ -126,6 +126,46 @@ export interface SettlementIntent {
   mode: SettlementMode;
 }
 
+export type SimulatedSettlementStatus = Extract<SettlementStatus, "quoted" | "approved" | "simulated">;
+
+export interface SettlementOfferSnapshot {
+  id: string;
+  supplierAgent: string;
+  amount: number;
+  asset: string;
+  destinationChain: string;
+  recipient: string;
+  expiresAt: string;
+}
+
+export interface SimulatedSettlementReceipt {
+  id: string;
+  issuedAt: string;
+  status: "SIMULATED";
+  simulated: true;
+  moneyMoved: false;
+  message: "Simulation only; no funds were transferred, reserved, or signed.";
+}
+
+export interface SimulatedSettlementQuote {
+  id: string;
+  mandateId: string;
+  offer: SettlementOfferSnapshot;
+  amount: number;
+  asset: string;
+  destinationChain: string;
+  recipient: string;
+  offerExpiresAt: string;
+  quoteExpiresAt: string;
+  createdAt: string;
+  mode: "SIMULATED";
+  policyResult: "pass" | "review";
+  status: SimulatedSettlementStatus;
+  approvalStatus: "pending" | "approved";
+  approvedAt?: string;
+  receipt?: SimulatedSettlementReceipt;
+}
+
 export type AuditActor =
   | "system"
   | "human"

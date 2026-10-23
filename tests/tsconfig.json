@@ -11,8 +11,10 @@
   "include": [
     "../src/domain/**/*.ts",
     "../src/app/api/**/*.ts",
+    "../server/agents/**/*.ts",
     "../server/privacy/**/*.ts",
     "../server/policy/**/*.ts",
+    "../server/settlement/**/*.ts",
     "../server/persistence/**/*.ts",
     "./**/*.ts"
   ],

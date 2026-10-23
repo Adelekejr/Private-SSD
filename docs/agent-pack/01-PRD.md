@@ -51,9 +51,9 @@ Three supplier agents respond:
 
 - One exceeds the price constraint.
 - One uses an unapproved recipient or contains a prompt-injection instruction.
-- One passes.
+- One offers 4,920 USDC, above the 1,000 USDC approval threshold, and requires explicit human approval.
 
-The user approves the winning offer. The system produces a simulated or testnet settlement receipt and shows why every decision happened.
+The user approves the threshold-review offer. The system produces a simulated receipt and shows why every decision happened; the simulation does not move funds.
 
 ## 7. Out of scope for the first submission
 
@@ -89,6 +89,6 @@ The current official schedule says the development window is **1 November 2026 0
 
 ## 12. Current human-scope rule
 
-Phase 4 was committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phases 1–5 are committed and pushed. The current human instruction authorizes **Phase 6 local implementation/review only**. Keep Phase 6 uncommitted and unpushed; do not start Phase 7 or later, connect or modify Vercel, deploy, publish, or change repository visibility. The current human instruction controls over older phase notes and generic workflow language in source documents.
+Phases 1–6 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `dd44a99274b63ca73a73c302fcaedc402d01120f`. The owner authorizes **Phase 7 local simulated settlement only**. Keep this work uncommitted and unpushed; do not start Phase 8, call or integrate external providers, wallets, live/testnet routes, connect or modify Vercel, deploy, publish, or change repository visibility. Preserve the 1,000 USDC threshold and 4,920 USDC demo offer. A threshold-only `REVIEW REQUIRED` outcome needs explicit human approval before simulation; blocked and unrelated review outcomes remain ineligible. The current owner instruction controls over older phase notes and generic workflow language in source documents.
 
-The current page supports mandate creation/editing, a redacted audit view, a provider-neutral inference adapter with a deterministic local fallback for non-binding buyer-request parsing, three schema-validated local supplier proposals, and deterministic server-side policy evaluation against saved mandate terms. Outcomes distinguish blocked offers, review/approval-required offers, and eligible offers. The fallback reports that no external provider was contacted and that verification/attestation were not performed. No real AI provider, wallet, NEAR, testnet, mainnet, human approval action, or settlement is used.
+The current page supports mandate creation/editing, a redacted audit view, deterministic simulated inference, three schema-validated local supplier proposals, deterministic server-side policy evaluation, and a local simulated settlement quote → explicit approval → status/receipt lifecycle. A review-required offer retains its policy label through human approval; the simulated receipt explicitly states that no money moved. No external provider, supplier, wallet, NEAR account, testnet, mainnet, real transfer, private inference, or attestation is used.

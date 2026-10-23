@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-Phase 4 was committed and pushed by the coordinator to `phase-1-foundation` at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phases 1–5 are committed and pushed. The current human instruction authorizes **Phase 6 local implementation/review only**. Keep Phase 6 uncommitted and unpushed; do not start Phase 7 or later, connect or modify Vercel, deploy, publish, or change repository visibility. This live scope supersedes older phase-only approval notes.
+Phases 1–6 are committed and pushed by the coordinator to `phase-1-foundation` through `dd44a99274b63ca73a73c302fcaedc402d01120f`. The current owner instruction authorizes **Phase 7 local simulated settlement only**. Keep Phase 7 uncommitted and unpushed; stop for owner review and do not start Phase 8. Preserve the 1,000 USDC threshold and 4,920 USDC offer. A threshold-only `REVIEW REQUIRED` result can proceed only after explicit human approval; blocked and unrelated review results remain ineligible. No provider, wallet, live/testnet route, Vercel connection/change, deployment, publication, or visibility change is authorized. This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -108,6 +108,14 @@ Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code e
 - Raw buyer text is not written to application logs or persisted. The idempotency cache stores only the request digest. A test captures application console output and confirms a unique sensitive marker is absent from both logs and the API response; the production-server smoke check confirmed it was absent from server output too.
 - All 34 tests passed; lint, typecheck, production build, and local production-server smoke checks passed. Health reports `private-ai-simulation`; the API reports simulated mode, `providerContacted: false`, and verification/attestation `not_performed`.
 - Phase 6 remains local and uncommitted/unpushed for owner review. No Vercel connection, deployment, publication, visibility change, real provider call, wallet, settlement, or funds were used. Phase 7 requires separate approval.
+
+### 7.6 Phase 7 checkpoint (2026-10-23)
+
+- Added a provider-neutral settlement adapter interface and local process-memory simulator for quote, explicit human approval, simulated execution, status, and receipt. The UI/API identify the entire flow as `SIMULATED`; the receipt states `moneyMoved: false` and is not on-chain.
+- Server-issued offer-run IDs bind quote requests to offers and policy results computed on the server. The existing 1,000 USDC threshold and 4,920 USDC Ember Compute offer are unchanged. Its policy stays `REVIEW REQUIRED`; only a threshold-only review may receive a quote and only after explicit human approval may it advance. Blocked offers and other review outcomes remain ineligible.
+- The server rechecks expiry, amount/budget, asset, destination, recipient, and unchanged policy before simulated receipt creation. Audit summaries are redacted. Offer-run, quote, status, receipt, nonce, and idempotency state are process-local and volatile.
+- All 38 tests passed; lint, typecheck, and production build passed. The local production-server smoke verified `settlement-simulation`, blocked/review outcomes, explicit approval, no pre-approval execution, final simulated status/receipt, and `moneyMoved: false`; the local server was stopped afterward.
+- No provider, supplier, wallet, key, live/testnet route, funds, Vercel, deployment, publication, or visibility change was used. Phase 7 remains local/uncommitted; stop for owner review before any later phase.
 
 ## 8. What not to do
 

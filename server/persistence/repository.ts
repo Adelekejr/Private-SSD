@@ -1,5 +1,7 @@
 import type {
   AuditEvent,
+  AuditActor,
+  AuditEventType,
   MandateStatus,
   MandateTerms,
   NewProcurementMandate,
@@ -26,6 +28,13 @@ export interface ProcurementRepository {
   listOffers(mandateId: string): Promise<SupplierOffer[]>;
   getSettlement(mandateId: string): Promise<SettlementIntent | null>;
   listAuditEvents(mandateId: string): Promise<AuditEvent[]>;
+  recordAuditEvent(event: {
+    mandateId: string;
+    actor: AuditActor;
+    eventType: AuditEventType;
+    summary: string;
+    occurredAt?: string;
+  }): Promise<AuditEvent>;
   createMandate(
     mandate: NewProcurementMandate,
     idempotencyKey: string,

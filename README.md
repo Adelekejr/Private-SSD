@@ -4,11 +4,11 @@ PrivateSpend Network is a constrained procurement workflow for small businesses.
 
 ## Current state
 
-The repository includes the **Phase 5 policy and security** work and the current local **Phase 6 private/simulated inference boundary**. It supports mandate creation/editing, shared browser/server mandate validation, typed constraints, create/read/update API routes, and a redacted audit trail. A provider-neutral inference adapter currently routes buyer text through deterministic local parsing; it returns non-binding suggestions and explicit provenance. Three local supplier fixtures pass strict schema validation. A separate server-side policy engine checks offers against the saved mandate, showing blocked, review-required, and pass outcomes with reasons; buyer suggestions never become policy authority.
+The repository includes the Phase 5 deterministic policy/security work, Phase 6 simulated private-inference boundary, and Phase 7 **local simulated settlement lifecycle**. Users can create/edit mandates, review the redacted audit trail, compare three deterministic local offers, create a server-issued simulated quote, explicitly approve it, run the simulation, and inspect its status and receipt. The settlement adapter interface is provider-neutral; the implemented adapter is local simulation only.
 
-Offers are **SIMULATED** local fixtures. The inference fallback is deterministic code, not an AI model or private-provider call; the UI reports that no provider was contacted and that verification and attestation were not performed. No supplier service, AI provider, wallet, NEAR account, testnet, mainnet, or funds are used. Policy outcomes are volatile API responses and are not persisted. There is no human approval action or settlement action. The Phase 2 seed still contains illustrative offer records; their static pass/block labels are not computed policy decisions. Supplier risk notes remain unverified.
+The demo remains at a **1,000 USDC approval threshold** and retains the **4,920 USDC Ember Compute offer**. The server-computed policy result stays `REVIEW REQUIRED` because the offer exceeds the threshold. A threshold-only review may receive a quote, but it advances only after a separate explicit human approval; approval does not rewrite the policy result. `BLOCKED` offers and other review outcomes, including a missing configured unit price, cannot enter the settlement lifecycle. The server revalidates quote expiry, destination, amount, asset, and recipient immediately before simulated receipt creation.
 
-Mandate data uses the Phase 2 in-memory repository. It is process-local and volatile: records and idempotency keys reset on restart and are not shared between workers or serverless instances. Offer-simulation idempotency is also process-local, expires after 15 minutes, and is not durable production storage. Raw buyer request text is not written to application logs or persisted; the cache stores only its digest alongside a short-lived response.
+All offers, offer-run snapshots, quotes, statuses, and receipts are volatile process-local demo data. No settlement provider, supplier service, wallet, key, chain, testnet, mainnet, funds, or real transfer is used. The receipt explicitly states that no money moved and is not on-chain. This is not real private inference, attested execution, or a live settlement. Raw buyer request text is not written to application logs or persisted; the inference fallback remains deterministic local code, not an AI model or private-provider call. Supplier risk notes remain unverified.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` to create or edit a mandate, inspect its audit events, parse a buyer request, and compare the three simulated offers. `GET http://localhost:3000/api/health` reports service readiness and `phase: private-ai-simulation`; it is an infrastructure check, not a procurement decision.
+Open `http://localhost:3000` to create or edit a mandate, compare simulated offers, review policy evidence, and complete the simulated quote → explicit approval → receipt flow. `GET http://localhost:3000/api/health` reports service readiness and `phase: settlement-simulation`; it is an infrastructure check, not a procurement decision.
 
 Useful checks:
 
@@ -32,14 +32,15 @@ npm run build
 
 ## Project map
 
-- `src/app/` — Next.js App Router workspace, health endpoint, mandate API routes, and simulated-offer endpoint.
-- `src/domain/` — typed procurement models, mandate validation, deterministic buyer parsing, and strict offer-response validation.
-- `src/components/mandate-workspace.tsx` — mandate creation/editing, buyer parsing, simulated comparison, and audit UI.
-- `server/agents/` — deterministic local supplier agents and rejected prompt-injection fixture.
-- `server/policy/` — deterministic policy evaluation, a no-execution pre-execution recheck guard, and volatile idempotency support.
+- `src/app/` — Next.js workspace, health endpoint, mandate APIs, offer simulation, and simulated settlement quote/approval/execute/status APIs.
+- `src/domain/` — procurement, policy, quote, receipt, transition, validation, and audit models.
+- `src/components/mandate-workspace.tsx` — mandate creation/editing, simulated offer comparison, policy evidence, explicit simulated approval, receipt, and audit UI.
+- `server/agents/` — deterministic local supplier agents, rejected prompt-injection fixture, and short-lived process-local offer-run snapshots.
+- `server/policy/` — deterministic policy evaluation, server-side pre-execution recheck, and volatile idempotency support.
+- `server/settlement/` — provider-neutral settlement adapter interface, local simulated quote/approval/execution/status/receipt lifecycle, API validation helpers, and redacted audit recording.
 - `server/privacy/` — provider-neutral inference boundary and deterministic simulated fallback; no provider SDK or gateway is configured.
-- `server/persistence/` — in-memory repository, seed fixtures, and the persistence replacement boundary.
-- `tests/` — Node test-runner coverage for transitions, validation, agent responses, offer API behavior, idempotency, and audit redaction.
+- `server/persistence/` — in-memory repository, seed fixtures, and persistence replacement boundary.
+- `tests/` — Node test-runner coverage for policy, settlement lifecycle, API gates, expiry, revalidation, idempotency, and audit redaction.
 - `docs/agent-pack/` — product, architecture, design, execution checklist, and agent-memory documents.
 - `AGENTS.md` and `memory.md` — repository operating instructions and durable project state.
 
@@ -53,4 +54,4 @@ The currently published [NEAR HACKATHON rules](https://nearhackathon.com/HACKATH
 
 ## Status
 
-Phases 1–5 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phase 6 is implemented locally and remains uncommitted/unpushed for review. The optional NEAR AI Cloud gateway is deferred because no provider credential is available; no real private inference or attestation occurred. No Vercel connection or change, deployment, publication, or visibility change has been made. See `docs/agent-pack/04-TASKS.md` for evidence-backed status and `memory.md` for durable decisions.
+Phases 1–6 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through `dd44a99274b63ca73a73c302fcaedc402d01120f`. Phase 7's simulated settlement slice is complete locally for owner review and remains uncommitted/unpushed. No provider, supplier, wallet, live/testnet route, Vercel connection/change, deployment, publication, or visibility change has been made. Stop after this simulated settlement slice; Phase 8 and any live integration require a separate owner decision. See `docs/agent-pack/04-TASKS.md` for evidence-backed status and `memory.md` for durable decisions.

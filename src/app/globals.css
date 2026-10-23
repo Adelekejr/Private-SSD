@@ -709,6 +709,123 @@ h1 {
 .offer-risk-group {
   border-top-color: rgb(183 123 42 / 45%);
 }
+.settlement-quote-button {
+  width: 100%;
+}
+.settlement-workspace {
+  display: grid;
+  gap: 13px;
+  margin-top: 3px;
+  padding: 18px 0 2px;
+  border-top: 1px solid var(--line);
+}
+.settlement-disclaimer {
+  margin: -5px 0 0;
+  padding: 9px 11px;
+  border-left: 2px solid var(--review);
+  color: var(--secondary);
+  background: var(--soft);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.settlement-empty-state {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  background: var(--surface);
+}
+.settlement-record {
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  background: white;
+}
+.settlement-record-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.settlement-id {
+  color: var(--muted);
+  font-size: 8px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.settlement-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.settlement-facts > div {
+  min-width: 0;
+}
+.settlement-facts dt {
+  color: var(--secondary);
+  font-size: 9px;
+}
+.settlement-facts dd {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.settlement-approval {
+  display: grid;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.settlement-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.settlement-confirmation input {
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: var(--green-readable);
+}
+.settlement-warning {
+  margin: 0;
+  color: var(--blocked);
+  font-size: 10px;
+}
+.simulation-receipt {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid rgb(8 122 67 / 35%);
+  background: #f7fff9;
+}
+.simulation-receipt h5 {
+  margin: 0;
+  font-size: 15px;
+}
+.simulation-receipt > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 10px;
+}
+.simulation-receipt .settlement-facts {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.settlement-message {
+  margin: 0;
+  color: var(--green-readable);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
 .rejected-response {
   display: grid;
   gap: 4px;
@@ -1177,6 +1294,19 @@ h1 {
   .offer-section-heading,
   .offer-card-heading {
     flex-direction: column;
+  }
+
+  .settlement-record-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settlement-id {
+    text-align: left;
+  }
+
+  .settlement-facts {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .privacy-options {

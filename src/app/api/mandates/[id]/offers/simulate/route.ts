@@ -1,6 +1,7 @@
 import { parseBuyerRequest } from "../../../../../../domain/buyer-request-parser";
 import type { InferenceStatus } from "../../../../../../domain/inference";
 import { getProcurementRepository } from "../../../../../../../server/persistence/in-memory-repository";
+import { getOfferRunStore } from "../../../../../../../server/agents/offer-run-store";
 import { runDeterministicSupplierAgents } from "../../../../../../../server/agents/supplier-agents";
 import { SimulatedPrivateInferenceAdapter } from "../../../../../../../server/privacy/simulated-private-adapter";
 import {
@@ -15,6 +16,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 interface OfferSimulationPayload {
   mode: "SIMULATED";
   policyAuthority: "SERVER";
+  offerRunId: string;
   inferenceStatus: InferenceStatus;
   buyerProposal: ReturnType<typeof parseBuyerRequest>;
   offers: ReturnType<typeof applyPolicyEvaluation>[];
@@ -84,10 +86,12 @@ export async function POST(request: Request, context: RouteContext) {
           if (offer.nonce) observedNonces.add(offer.nonce);
           return applyPolicyEvaluation(offer, policyEvaluation);
         });
+        const offerRunId = getOfferRunStore().create(mandate.id, offers, now);
 
         return {
           mode: "SIMULATED",
           policyAuthority: "SERVER",
+          offerRunId,
           inferenceStatus: inference.status,
           buyerProposal: inference.output,
           offers,

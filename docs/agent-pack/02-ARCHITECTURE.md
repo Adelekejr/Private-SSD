@@ -116,13 +116,15 @@ interface SettlementIntent {
 
 ```text
 GET    /api/health
+GET    /api/mandates
 POST   /api/mandates
+GET    /api/mandates/:id
+PUT    /api/mandates/:id
 POST   /api/mandates/:id/offers/simulate
-POST   /api/offers/:id/evaluate
-POST   /api/offers/:id/approve
-POST   /api/settlement/quote
-POST   /api/settlement/execute
-GET    /api/mandates/:id/audit
+POST   /api/mandates/:id/settlement/quote
+POST   /api/mandates/:id/settlement/:quoteId/approve
+POST   /api/mandates/:id/settlement/:quoteId/execute
+GET    /api/mandates/:id/settlement/:quoteId
 ```
 
 Every write endpoint must validate input, attach an idempotency key, record an audit event, and return a typed response. `/api/settlement/execute` must re-evaluate the selected offer server-side immediately before execution.
@@ -154,7 +156,7 @@ Keep raw procurement text and supplier documents out of public logs. Store a con
 
 ### 8.1 NEAR Intents / 1Click
 
-The settlement adapter should create a desired outcome, request a quote, validate expiry and destination, require human approval, and track status. A simulated adapter must expose the same lifecycle without claiming real settlement.
+The settlement adapter should create a desired outcome, request a quote, validate expiry and destination, require human approval, and track status. A simulated adapter must expose the same lifecycle without claiming real settlement. The current Phase 7 adapter is simulated-only and process-local: it never calls a provider, wallet, or chain, and its receipt never implies funds moved. Its policy gate permits a threshold-only `REVIEW REQUIRED` outcome only after explicit human approval; blocked and unrelated review outcomes remain ineligible. Any provider or testnet integration is a separate owner decision.
 
 ### 8.2 Restricted permissions
 
@@ -186,7 +188,7 @@ Optional for onboarding or low-value actions. Do not let gas sponsorship complic
 
 A Vercel-style request-driven deployment can host the frontend and serverless API handlers. Long-running agent workers, scheduled jobs, or persistent streams should be avoided in the first demo or moved to a separate worker service. Use a free-tier deployment only after verifying current limits. A static frontend plus serverless endpoints is enough for the judge flow.
 
-Deployment, Vercel changes, commits, pushes, and visibility changes require separate explicit human approval under the current Phase 1 scope.
+Deployment, Vercel changes, commits, pushes, and visibility changes require separate explicit human approval. The current Phase 7 scope keeps this implementation local and uncommitted; no deployment or Vercel work is authorized.
 
 ## 11. Failure behavior
 
