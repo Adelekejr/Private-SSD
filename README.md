@@ -1,14 +1,14 @@
 # PrivateSpend Network
 
-PrivateSpend Network is a planned confidential, multi-agent procurement and settlement system for small businesses. Its intended rule is: **agents can negotiate; deterministic constraints decide; NEAR may settle an approved outcome.**
+PrivateSpend Network is a constrained procurement workflow for small businesses. Its governing rule is: **agents can negotiate; deterministic constraints decide; a human approves; NEAR may settle an approved outcome.**
 
 ## Current state
 
-This repository is at the **Phase 2 domain and persistence** stage. It contains the Next.js application shell, health endpoint, typed domain models, deterministic sample records, a process-local in-memory repository, and guarded status transitions. Mandate creation, supplier agents, policy evaluation, approval flow, private inference, wallet permissions, and settlement execution are not implemented.
+The repository is at the **Phase 3 mandate workflow** stage. The app now provides a mandate creation/editing screen, browser and server validation, typed constraints, create/read/update API routes, and a redacted audit trail for creation and field changes. The existing sample mandate remains available as a deterministic fixture.
 
-The in-memory adapter is volatile: its data resets on process restart and is not shared between workers or serverless instances. The sample offers' policy labels are fixed fixture data, not the output of a policy engine.
+Mandate data uses the Phase 2 in-memory repository. It is process-local and volatile: records and idempotency keys reset on restart and are not shared between workers or serverless instances. It is suitable for local development and tests, not durable production storage. The three sample offers remain fixed fixture records; their labels are not produced by a policy engine.
 
-No provider is called and no NEAR account, key, testnet, mainnet, or funds are used here. No private or attested inference is claimed. Any later simulated flow must be labeled as simulated.
+Privacy mode is recorded as a mandate preference only. No AI provider, attestation, supplier service, wallet, NEAR account, testnet, mainnet, or funds are used. Supplier agents, offer evaluation, policy decisions, approval actions, private inference, and settlement execution remain unimplemented. No live or private execution is claimed.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` to see the foundation-only landing page. The infrastructure health check is `GET http://localhost:3000/api/health`; it reports service readiness and the current `domain-persistence` phase only, and does not exercise a product workflow.
+Open `http://localhost:3000` to create or edit a mandate and inspect its audit events. `GET http://localhost:3000/api/health` reports service readiness and `phase: mandate-workflow`; it is an infrastructure check, not a procurement decision.
 
 Useful checks:
 
@@ -32,18 +32,18 @@ npm run build
 
 ## Project map
 
-- `src/app/` — Next.js App Router shell and the minimal health route.
-- `src/domain/` — typed procurement, offer, settlement, audit, and status-transition models.
-- `src/components/`, `src/styles/` — reserved frontend structure.
-- `server/persistence/` — in-memory adapter, deterministic fixtures, and the documented repository replacement boundary.
+- `src/app/` — Next.js App Router workspace, health endpoint, and mandate API routes.
+- `src/domain/` — typed procurement models and shared mandate validation/constraint construction.
+- `src/components/mandate-workspace.tsx` — mandate creation, editing, and audit UI.
+- `server/persistence/` — in-memory repository, deterministic fixtures, and the persistence replacement boundary.
 - `server/agents/`, `server/policy/`, `server/settlement/`, `server/privacy/`, `server/audit/` — boundaries reserved for later approved stages.
-- `tests/` — focused Node test-runner coverage for the Phase 2 domain and adapter.
-- `docs/agent-pack/` — the source-of-truth product, architecture, design, execution, and agent-memory documents.
+- `tests/` — Node test-runner coverage for domain transitions, mandate validation, API writes, idempotency, and audit behavior.
+- `docs/agent-pack/` — product, architecture, design, execution checklist, and agent-memory documents.
 - `AGENTS.md` and `memory.md` — repository operating instructions and durable project state.
 
 ## Environment variables
 
-`.env.example` contains blank variable names only. There are no environment variables required to run this foundation, and its future integration names are provisional until a provider is selected and its official documentation is checked. Never put values or secrets in `.env.example`; use a local ignored `.env.local` only when a later approved integration requires it.
+`.env.example` contains blank variable names only. No environment variables are required for the current local mandate workflow. Never put values or secrets in `.env.example`; use a local ignored `.env.local` only if a separately approved integration later requires it.
 
 ## Hackathon delivery notes
 
@@ -51,4 +51,4 @@ The currently published [NEAR HACKATHON rules](https://nearhackathon.com/HACKATH
 
 ## Status
 
-See `docs/agent-pack/04-TASKS.md` for evidence-backed phase status and `memory.md` for current decisions and the next approved step.
+See `docs/agent-pack/04-TASKS.md` for evidence-backed phase status and `memory.md` for current decisions. Phase 4 and later work, as well as commit/push/deploy/Vercel changes, require separate owner approval.

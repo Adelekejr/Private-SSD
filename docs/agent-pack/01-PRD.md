@@ -89,6 +89,6 @@ The current official schedule says the development window is **1 November 2026 0
 
 ## 12. Current human-scope rule
 
-The approved Phase 1 task includes the repository skeleton, documentation, names-only `.env.example`, package manifest and lockfile, a minimal placeholder app shell, and clean-install/build verification. It does **not** authorize the procurement product workflow (mandates, offers, policy, approvals, agents, private inference, wallet operations, or settlement). **No commit, push, deploy, Vercel change, or visibility change may occur without separate explicit human approval.** This current rule controls over any generic workflow language in the source documents.
+The original source PDF recorded the Phase 1 foundation as the then-approved scope. That historical scope is superseded for this implementation: the current human instruction explicitly authorizes **Phase 3 mandate workflow only**, building on completed Phases 1 and 2. Phase 4 and later work are not authorized. **No commit, push, deploy, Vercel change, or visibility change may occur without separate explicit human approval.** The current human instruction controls over generic workflow language in the source documents.
 
-The foundation's page and health endpoint are infrastructure placeholders only. They must not be described as a working procurement product.
+The current page supports mandate creation/editing and a redacted audit view. Supplier offers, policy evaluation, human approval actions, private inference, wallet operations, and settlement are still unimplemented and must not be described as working product features.

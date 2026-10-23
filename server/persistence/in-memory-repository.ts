@@ -1,11 +1,16 @@
+import { createHash, randomUUID } from "node:crypto";
 import type {
   AuditEvent,
+  AuditEventType,
   MandateStatus,
+  MandateTerms,
+  NewProcurementMandate,
   ProcurementMandate,
   SettlementIntent,
   SettlementStatus,
   SupplierOffer,
 } from "../../src/domain/models";
+import { buildMandateConstraints } from "../../src/domain/mandate-validation";
 import {
   assertMandateStatusTransition,
   assertSettlementStatusTransition,
@@ -13,15 +18,42 @@ import {
 import { createDemoSeedData } from "./demo-seed";
 import {
   RepositoryEntityNotFoundError,
+  RepositoryIdempotencyConflictError,
   type ProcurementRepository,
   type ProcurementSeedData,
 } from "./repository";
+
+interface CompletedWrite {
+  requestDigest: string;
+  mandate: ProcurementMandate;
+}
+
+const editableFields = [
+  "purpose",
+  "budget",
+  "asset",
+  "maxUnitPrice",
+  "minReliability",
+  "allowedDestinations",
+  "approvedRecipients",
+  "approvalThreshold",
+  "privacyMode",
+] as const satisfies readonly (keyof MandateTerms)[];
+
+function digest(value: unknown): string {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function sameValue(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
 
 export class InMemoryProcurementRepository implements ProcurementRepository {
   private readonly mandates = new Map<string, ProcurementMandate>();
   private readonly offers: SupplierOffer[];
   private readonly settlements = new Map<string, SettlementIntent>();
   private readonly auditEvents: AuditEvent[];
+  private readonly completedWrites = new Map<string, CompletedWrite>();
   private auditSequence: number;
 
   constructor(seed: ProcurementSeedData = createDemoSeedData()) {
@@ -59,6 +91,85 @@ export class InMemoryProcurementRepository implements ProcurementRepository {
     return structuredClone(
       this.auditEvents.filter((event) => event.mandateId === mandateId),
     );
+  }
+
+  async createMandate(
+    input: NewProcurementMandate,
+    idempotencyKey: string,
+    occurredAt = new Date().toISOString(),
+  ): Promise<ProcurementMandate> {
+    const key = `create:${idempotencyKey}`;
+    const requestDigest = digest(input);
+    const replay = this.completedWrites.get(key);
+    if (replay) {
+      if (replay.requestDigest !== requestDigest) {
+        throw new RepositoryIdempotencyConflictError();
+      }
+      return structuredClone(replay.mandate);
+    }
+
+    const mandate: ProcurementMandate = {
+      ...structuredClone(input),
+      id: `mandate-${randomUUID()}`,
+    };
+    this.mandates.set(mandate.id, mandate);
+    this.appendAuditEvent({
+      mandateId: mandate.id,
+      actor: "human",
+      eventType: "mandate_created",
+      summary: "Mandate created. Purpose and recipient values are redacted.",
+      occurredAt,
+    });
+    this.completedWrites.set(key, {
+      requestDigest,
+      mandate: structuredClone(mandate),
+    });
+    return structuredClone(mandate);
+  }
+
+  async updateMandate(
+    id: string,
+    terms: MandateTerms,
+    idempotencyKey: string,
+    occurredAt = new Date().toISOString(),
+  ): Promise<ProcurementMandate> {
+    const key = `update:${id}:${idempotencyKey}`;
+    const requestDigest = digest(terms);
+    const replay = this.completedWrites.get(key);
+    if (replay) {
+      if (replay.requestDigest !== requestDigest) {
+        throw new RepositoryIdempotencyConflictError();
+      }
+      return structuredClone(replay.mandate);
+    }
+
+    const mandate = this.mandates.get(id);
+    if (!mandate) {
+      throw new RepositoryEntityNotFoundError("mandate", id);
+    }
+    const changedFields = editableFields.filter(
+      (field) => !sameValue(mandate[field], terms[field]),
+    );
+    const updated: ProcurementMandate = {
+      ...mandate,
+      ...structuredClone(terms),
+      constraints: buildMandateConstraints(terms),
+    };
+    this.mandates.set(id, updated);
+    if (changedFields.length > 0) {
+      this.appendAuditEvent({
+        mandateId: id,
+        actor: "human",
+        eventType: "mandate_updated",
+        summary: `Mandate updated: ${changedFields.join(", ")}. Values are redacted.`,
+        occurredAt,
+      });
+    }
+    this.completedWrites.set(key, {
+      requestDigest,
+      mandate: structuredClone(updated),
+    });
+    return structuredClone(updated);
   }
 
   async transitionMandateStatus(
@@ -107,7 +218,8 @@ export class InMemoryProcurementRepository implements ProcurementRepository {
 
   private appendAuditEvent(event: {
     mandateId: string;
-    eventType: "mandate_status_changed" | "settlement_status_changed";
+    actor?: AuditEvent["actor"];
+    eventType: AuditEventType;
     summary: string;
     occurredAt: string;
   }): void {
@@ -115,7 +227,7 @@ export class InMemoryProcurementRepository implements ProcurementRepository {
     this.auditEvents.push({
       id: `audit-memory-${String(this.auditSequence).padStart(3, "0")}`,
       mandateId: event.mandateId,
-      actor: "system",
+      actor: event.actor ?? "system",
       eventType: event.eventType,
       summary: event.summary,
       occurredAt: event.occurredAt,

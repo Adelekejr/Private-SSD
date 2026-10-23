@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PrivateSpend Network",
+  title: "PrivateSpend Network — Mandates",
   description:
-    "Foundation for a constrained, evidence-led procurement and settlement workflow.",
+    "Create and edit procurement mandates with explicit constraints and a redacted audit trail.",
 };
 
 export default function RootLayout({

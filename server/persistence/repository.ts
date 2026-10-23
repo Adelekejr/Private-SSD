@@ -1,6 +1,8 @@
 import type {
   AuditEvent,
   MandateStatus,
+  MandateTerms,
+  NewProcurementMandate,
   ProcurementMandate,
   SettlementIntent,
   SettlementStatus,
@@ -24,6 +26,17 @@ export interface ProcurementRepository {
   listOffers(mandateId: string): Promise<SupplierOffer[]>;
   getSettlement(mandateId: string): Promise<SettlementIntent | null>;
   listAuditEvents(mandateId: string): Promise<AuditEvent[]>;
+  createMandate(
+    mandate: NewProcurementMandate,
+    idempotencyKey: string,
+    occurredAt?: string,
+  ): Promise<ProcurementMandate>;
+  updateMandate(
+    id: string,
+    terms: MandateTerms,
+    idempotencyKey: string,
+    occurredAt?: string,
+  ): Promise<ProcurementMandate>;
   transitionMandateStatus(
     id: string,
     nextStatus: MandateStatus,
@@ -45,5 +58,12 @@ export class RepositoryEntityNotFoundError extends Error {
     this.name = "RepositoryEntityNotFoundError";
     this.entity = entity;
     this.id = id;
+  }
+}
+
+export class RepositoryIdempotencyConflictError extends Error {
+  constructor() {
+    super("The idempotency key was already used for a different request.");
+    this.name = "RepositoryIdempotencyConflictError";
   }
 }

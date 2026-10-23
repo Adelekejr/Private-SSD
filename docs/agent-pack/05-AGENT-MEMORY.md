@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-The current Phase 1 task authorizes the repository skeleton, documentation, names-only `.env.example`, package manifest and lockfile, minimal placeholder app shell, and clean-install/build verification. It does not authorize the procurement product workflow. **No commit, push, deploy, Vercel change, or repository visibility change is permitted without separate explicit human approval.**
+The current human instruction explicitly authorizes **Phase 3 mandate workflow only**, building on completed Phase 1 and Phase 2 work. Phase 4 and later remain unapproved. **No commit, push, deploy, Vercel change, or repository visibility change is permitted without separate explicit human approval.** This live scope supersedes the Phase 1-only approval note in the original source PDF.
 
 ## 4. Permanent decisions
 

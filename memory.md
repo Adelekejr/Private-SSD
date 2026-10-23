@@ -2,31 +2,31 @@
 
 ## Current status
 
-- Product: PrivateSpend Network, a confidential multi-agent procurement and settlement system for small businesses. Its rule is: agents may negotiate, deterministic constraints decide, and a human retains approval authority before any real settlement.
-- Repository: `Adelekejr/Private-SSD`, a private repository separate from InvoiceLens.
-- Phase 1 foundation is committed and pushed on branch `phase-1-foundation` at `d8129aac8e4fe035690346e5d52fc51d748626f2`.
-- Adeleke explicitly approved starting Phase 2. Phase 2 is implemented locally on the current branch; those changes remain uncommitted and unpushed.
-- Phase 2 adds typed mandate, constraint, offer, settlement, and audit models; deterministic demo seed data; an in-memory repository behind an async-shaped interface; and guarded mandate/settlement transitions that emit redacted audit events.
-- Verification passed on 2026-10-23: `npm test` (6 tests), `npm run lint`, `npm run typecheck`, and `npm run build` with Next.js 16.4.3. A local production-server smoke test confirmed the updated landing-page status copy and `/api/health` reports `phase: domain-persistence`; the server was stopped afterward.
-- No supplier was contacted, no policy engine or private inference ran, no wallet/provider was connected, and no settlement was submitted. No Vercel setting or deployment was changed.
+- Product: PrivateSpend Network, a constrained procurement workflow for small businesses. Agents may propose; deterministic constraints decide; a human retains authority before any real settlement.
+- Repository: private `Adelekejr/Private-SSD`, working tree on branch `phase-1-foundation`.
+- Phases 1 and 2 are committed through `4e770d0f3f1b188eaf1dc037201d29588ff990fa` (`feat: add PrivateSpend domain and persistence foundation`).
+- Adeleke explicitly approved Phase 3 only. Phase 3 mandate creation/editing is implemented locally and remains uncommitted. No commit, push, publish, deployment, repository visibility change, or Vercel change was made.
+- Phase 3 adds a responsive mandate workspace, shared browser/server validation, `GET`/`POST /api/mandates` and `GET`/`PUT /api/mandates/:id`, typed constraint construction, process-local idempotency, and redacted human audit events for create/update.
+- Creation audit entries do not include mandate values. Update audit entries contain changed field names, not field values. The privacy-mode selector stores a preference only; it does not call a provider or attest execution.
+- Verification on 2026-10-23: `npm test` passed all 11 tests; `npm run lint`, `npm run typecheck`, and `npm run build` passed. A production-server smoke test confirmed the Phase 3 page and health phase, server rejection of invalid input, create and same-key replay without duplication, edit persistence during the process, and creation/update audit entries with values redacted. The temporary server was stopped.
 
-## Important source conflict
+## Important scope and source notes
 
-`docs/agent-pack/05-AGENT-MEMORY.md` records an existing PrivateSpend dashboard and simulated server boundary. That statement conflicts with the verified empty state of this new repository. Treat it as historical source context, not as code or a current implementation. Do not search InvoiceLens for reusable code or assume an earlier PrivateSpend implementation exists.
+- The original agent-pack documents contain historical Phase 1/Phase 2-only approval language. The current human instruction explicitly authorizes Phase 3 only and supersedes that stale scope restriction; Phase 4 and later are not authorized.
+- `docs/agent-pack/05-AGENT-MEMORY.md` records an existing PrivateSpend dashboard and simulated server boundary. That statement conflicts with this repository's original verified state. Treat it as historical source context, not as code or current implementation evidence. Do not search InvoiceLens for reusable code or assume an earlier PrivateSpend implementation exists.
+- Do not copy or import code from InvoiceLens. This repository is separate.
 
-Older project documentation also described Phase 1 as the only approved scope. Adeleke's explicit current approval supersedes that scope restriction for Phase 2 only; it does not authorize Phase 3 or any commit, push, publication, deployment, or Vercel change for Phase 2.
+## Durable decisions and limitations
 
-## Durable decisions
-
-- Phase 2 remains domain and persistence only. Do not add mandate UI, supplier agents, a policy engine, real AI, wallet integration, or settlement workflow in this stage.
-- Offer `policyResult` and `riskReasons` values in the demo seed are fixed illustrative fixture data; they are not computed policy decisions.
-- The repository boundary is `server/persistence/repository.ts`. The current adapter is process-local and volatile: its state resets on restart and is not shared between workers or serverless instances. It is suitable for local domain work and tests, not durable production use.
-- The settlement seed is labeled `simulated` and `not_started`; it does not perform or claim a settlement.
-- The health endpoint reports infrastructure readiness and the informational phase `domain-persistence`; it does not exercise a procurement workflow.
-- Use deterministic behavior and clearly label simulations. No provider or transaction claims without verified evidence.
-- Do not commit or push Phase 2, publish, deploy, alter repository visibility, or modify Vercel without a new separate explicit user approval.
-- The current official event rules were previously checked at `https://nearhackathon.com/HACKATHON.md`. Re-read them on 1 November 2026 and again before submission.
+- The Phase 2 persistence boundary is `server/persistence/repository.ts`. The current implementation remains process-local and volatile: mandate records, audit events, and idempotency keys reset on restart and are not shared between workers or serverless instances. It is for local development/tests, not durable production storage.
+- Mandate validation is deterministic and shared between the browser form and server routes. It validates purpose, numeric ranges, asset format, reliability range, unique chains/recipients, approval threshold versus budget, and privacy-mode enum.
+- The supported privacy modes are saved as user-entered mandate preferences only. No private AI, attestation, policy engine, supplier agent, wallet, NEAR provider, or settlement execution was added.
+- Offer policy labels in the deterministic seed remain illustrative fixture data, not computed policy decisions. The settlement seed is `simulated` and `not_started`; it is not an executed or real settlement.
+- The health endpoint reports infrastructure readiness and `mandate-workflow`; it does not exercise a procurement or policy decision.
+- No secret, key, provider, or funds are used. No claim of private inference, attestation, testnet, mainnet, or settlement is made.
+- Do not commit or push Phase 3, begin Phase 4, publish, deploy, alter repository visibility, or modify Vercel without separate explicit owner approval.
+- The official hackathon rules should be re-read on 1 November 2026 and before submission.
 
 ## Next step
 
-Stop for Adele's review of Phase 2. The next proposed stage is Phase 3 (mandate creation/editing and input validation), but do not start it until separately approved.
+Stop for Adele's review of Phase 3. Wait for separate owner approval before Phase 4, any commit/push, or any external release/deployment action.

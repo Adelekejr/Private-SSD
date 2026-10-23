@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule:** Phase 1 is complete and committed at `d8129aac8e4fe035690346e5d52fc51d748626f2`. Adeleke explicitly approved Phase 2, limited to the checklist below. Phase 3 and later remain unapproved. Do not commit, push, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
+**Current scope rule (2026-10-23):** Phases 1 and 2 are committed through `4e770d0f3f1b188eaf1dc037201d29588ff990fa`. Adeleke explicitly approved Phase 3 only. Phase 4 and later remain unapproved. Do not commit, push, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -33,7 +33,7 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - `npm run typecheck` passed.
 - `npm run build` passed with Next.js 16.4.3; the build reported `/` as static and `/api/health` as on-demand server-rendered.
 - A local production-server smoke test confirmed the home page states that the product workflow is not implemented and `GET /api/health` returns `status: ok`, `service: privatespend-network`, `phase: foundation`. The local server was stopped afterward.
-- Phase 1 was committed and pushed by the coordinator to `phase-1-foundation` as `d8129aac8e4fe035690346e5d52fc51d748626f2`. Phase 2 changes remain local and uncommitted; no Phase 2 deployment, Vercel change, or visibility change occurred.
+- Phase 1 was committed and pushed by the coordinator to `phase-1-foundation` as `d8129aac8e4fe035690346e5d52fc51d748626f2`. Phase 2 was still local at this historical checkpoint; it was subsequently committed, and Phases 1–2 are now included through `4e770d0f3f1b188eaf1dc037201d29588ff990fa`. No deployment, Vercel change, or visibility change occurred.
 
 ## 4. Phase 2 — domain and persistence
 
@@ -50,14 +50,24 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - Added mandate and settlement transition graphs. Invalid transitions throw `InvalidStatusTransitionError` without mutating state; valid transitions append redacted audit events.
 - `npm test` passed all 6 focused tests. `npm run lint`, `npm run typecheck`, and `npm run build` passed. The tests use Node's built-in runner and the existing TypeScript compiler; no test dependency was added.
 - A local production-server smoke test confirmed the landing-page Phase 2/fixture copy and `GET /api/health` returns `status: ok`, `service: privatespend-network`, `phase: domain-persistence`; the server was stopped afterward.
-- The landing page remains a non-interactive placeholder, and no product API, supplier agent, policy engine, AI/provider, wallet, or settlement execution was added. Phase 2 changes remain uncommitted and unpushed.
+- At the Phase 2 checkpoint, the landing page was still a non-interactive placeholder, and no product API, supplier agent, policy engine, AI/provider, wallet, or settlement execution had been added. The Phase 2 implementation was subsequently committed at `4e770d0f3f1b188eaf1dc037201d29588ff990fa`; no settlement was executed.
 
 ## 5. Phase 3 — mandate workflow
 
-- [ ] Build mandate creation and editing.
-- [ ] Support budget, asset, unit price, reliability, allowed chains, recipients, approval threshold, and privacy mode.
-- [ ] Validate inputs on both browser and server.
-- [ ] Record mandate creation and changes in the audit trail.
+- [x] Build mandate creation and editing.
+- [x] Support budget, asset, unit price, reliability, allowed chains, recipients, approval threshold, and privacy mode.
+- [x] Validate inputs on both browser and server.
+- [x] Record mandate creation and changes in the audit trail.
+
+### Phase 3 evidence (2026-10-23)
+
+- Cross-checked the original five source PDFs in `/home/ubuntu/upload/` against the agent-pack Markdown. The Phase 3 scope matches the source task list: mandate creation/editing, required constraint fields, browser/server validation, and audit recording. The architecture and design sources support the repository boundary, explicit privacy labeling, and accessible sparse UI.
+- Added `src/components/mandate-workspace.tsx` and responsive styles in `src/app/globals.css`. The page lists the seeded mandate, supports creating and editing, displays all requested terms and the redacted audit timeline, and marks later workflow stages as out of scope.
+- Added `src/domain/mandate-validation.ts`, used in both the browser and server. It validates purpose, asset symbol, positive budget and optional unit price, reliability in the 0–1 range, unique allowed chains and recipients, approval threshold not exceeding budget, and the privacy-mode enum. Constraint records are rebuilt from saved terms.
+- Added `GET`/`POST /api/mandates` and `GET`/`PUT /api/mandates/:id`. Write routes require idempotency keys and repeat validation server-side. The in-memory repository records human create/update events; update summaries contain changed field names only and omit field values.
+- `npm test` passed all 11 tests, including route validation, idempotent replay, mandate edits, constraint updates, and audit redaction. `npm run lint`, `npm run typecheck`, and `npm run build` passed.
+- A production-server smoke test confirmed the rendered Phase 3 page, `/api/health` phase `mandate-workflow`, invalid POST rejection, create, same-key replay without duplication, update, and redacted audit entries. The local server was stopped afterward.
+- The adapter remains volatile and process-local; mandate data and idempotency state reset on restart. Privacy mode is a stored preference only. No supplier agents, policy evaluation, AI provider, attestation, wallet, settlement, external services, or funds were used. No commit, push, deployment, or Vercel change occurred.
 
 ## 6. Phase 4 — agent offer workflow
 

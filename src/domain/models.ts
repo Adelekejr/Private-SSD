@@ -59,21 +59,26 @@ export type Constraint =
       asset: string;
     };
 
-export interface ProcurementMandate {
-  id: string;
-  buyerAccount: string;
+export interface MandateTerms {
   purpose: string;
   asset: string;
   budget: number;
   maxUnitPrice?: number;
   minReliability?: number;
-  constraints: Constraint[];
   allowedDestinations: string[];
   approvedRecipients: string[];
   approvalThreshold: number;
   privacyMode: PrivacyMode;
+}
+
+export interface ProcurementMandate extends MandateTerms {
+  id: string;
+  buyerAccount: string;
+  constraints: Constraint[];
   status: MandateStatus;
 }
+
+export type NewProcurementMandate = Omit<ProcurementMandate, "id">;
 
 export interface SupplierOffer {
   id: string;
@@ -111,6 +116,8 @@ export type AuditActor =
 
 export type AuditEventType =
   | "demo_seed_loaded"
+  | "mandate_created"
+  | "mandate_updated"
   | "mandate_status_changed"
   | "settlement_status_changed";
 
