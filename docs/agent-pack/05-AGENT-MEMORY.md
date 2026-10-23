@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-The current human instruction authorizes **Phase 4 local implementation only**, building on completed Phases 1–3. Stop for review after Phase 4; Phase 5 and later remain unapproved. **Do not commit or push Phase 4, deploy, change Vercel, or change repository visibility without separate explicit human approval.** This live scope supersedes older phase-only approval notes.
+Phase 4 was committed and pushed by the coordinator to `phase-1-foundation` at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. The current human instruction authorizes **Phase 5 local implementation/review only**. Keep Phase 5 uncommitted and unpushed; do not connect or modify Vercel, deploy, publish, or change repository visibility. Phase 6 and later require separate approval. This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -91,8 +91,15 @@ Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code e
 
 - Added deterministic buyer-request parsing to typed, non-binding constraint suggestions; missing or invalid values fall back to the saved mandate.
 - Added three deterministic local supplier agents, strict response validation, visible evidence and unverified risk notes, and a prompt-injection fixture that is rejected without echoing its instruction.
-- Offer results are ephemeral and explicitly `NOT EVALUATED`; there is no policy engine, approval, private inference, supplier integration, wallet, or settlement in this phase.
-- `npm test` passed 17 tests; lint, type-check, production build, and local production-server smoke checks passed. Phase 4 remains local and uncommitted/unpushed pending Adeleke's review. No Vercel or deployment change occurred. Phase 5 requires separate approval.
+- Offer results were ephemeral and `NOT EVALUATED` at the Phase 4 checkpoint; policy, approval, private inference, supplier integration, wallet, and settlement were absent at that point.
+- `npm test` passed 17 tests; lint, type-check, production build, and local production-server smoke checks passed. The coordinator later committed and pushed Phase 4 as `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. No Vercel or deployment change occurred.
+
+### 7.4 Phase 5 checkpoint (2026-10-23)
+
+- Added deterministic server-side policy evaluation for budget, asset, unit price, recipient, chain, reliability, expiry, nonce replay, and approval threshold. Results distinguish `blocked`, `review`, and `pass`; policy reasons are separate from unverified supplier notes. Missing unit price under a configured maximum requires review, and amounts strictly above threshold require human approval.
+- Added strict offer expiry/nonce schema, short-lived process-local offer-simulation idempotency, and `checkOfferBeforeExecution` as a no-execution server guard/test seam. The guard revalidates current mandate terms and a caller-provided consumed-nonce set; it does not execute or consume a nonce.
+- All 32 tests, lint, typecheck, production build, and local production API smoke checks passed. Health reports `policy-security`; results were `blocked`, `blocked`, `review`; idempotent replay and `409` conflict behavior passed; prompt-injection content was not echoed.
+- Phase 5 remains local and uncommitted/unpushed. No Vercel connection, deployment, publication, visibility change, external supplier call, wallet, approval action, settlement, or funds were used. Phase 6 requires separate approval.
 
 ## 8. What not to do
 

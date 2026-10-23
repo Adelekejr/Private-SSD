@@ -12,6 +12,8 @@ export interface SupplierAgentResponse {
   reliabilityScore: number;
   evidence: string[];
   riskNotes: string[];
+  expiresAt: string;
+  nonce: string;
 }
 
 export type SupplierResponseValidation =
@@ -29,6 +31,8 @@ const REQUIRED_KEYS = [
   "reliabilityScore",
   "evidence",
   "riskNotes",
+  "expiresAt",
+  "nonce",
 ] as const;
 const OPTIONAL_KEYS = ["unitPrice"] as const;
 const ALLOWED_KEYS = new Set<string>([...REQUIRED_KEYS, ...OPTIONAL_KEYS]);
@@ -51,6 +55,12 @@ function isTextList(value: unknown, maxItems: number): value is string[] {
 
 function isPositiveFinite(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function isIsoDateTime(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
 }
 
 export function validateSupplierAgentResponse(
@@ -88,7 +98,10 @@ export function validateSupplierAgentResponse(
     input.reliabilityScore >= 0 &&
     input.reliabilityScore <= 1 &&
     isTextList(input.evidence, 6) &&
-    isTextList(input.riskNotes, 6);
+    isTextList(input.riskNotes, 6) &&
+    isIsoDateTime(input.expiresAt) &&
+    isText(input.nonce, 128) &&
+    /^[A-Za-z0-9._:-]{1,128}$/.test(input.nonce);
 
   if (!valid) {
     return { success: false, reason: "Response does not match the required offer schema." };
@@ -109,6 +122,8 @@ export function validateSupplierAgentResponse(
       reliabilityScore: response.reliabilityScore,
       evidence: [...response.evidence],
       riskNotes: [...response.riskNotes],
+      expiresAt: response.expiresAt,
+      nonce: response.nonce,
     },
   };
 }
@@ -125,6 +140,8 @@ export function toSupplierOffer(response: SupplierAgentResponse): SupplierOffer 
     recipient: response.recipient,
     reliabilityScore: response.reliabilityScore,
     evidence: [...response.evidence],
+    expiresAt: response.expiresAt,
+    nonce: response.nonce,
     policyResult: "not_evaluated",
     riskReasons: [...response.riskNotes],
   };

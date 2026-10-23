@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phases 1–3 are committed and pushed through `a98ec9db3e1eebd157af2ebc5303ee87e25e9dbb`. Adeleke approved Phase 4 local implementation only. Stop for review after Phase 4; Phase 5 and later remain unapproved. Do not commit or push Phase 4, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
+**Current scope rule (2026-10-23):** Phase 4 was committed and pushed by the coordinator to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. Adeleke authorized Phase 5 local implementation/review only. Keep Phase 5 uncommitted and unpushed; do not connect or modify Vercel, publish, deploy, or change repository visibility. Phase 6 and later remain unapproved; this overrides the source memory's generic checkpoint-commit suggestion.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -84,17 +84,27 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - Added a malformed prompt-injection fixture with an unexpected instruction field. Strict validation rejects it and the UI shows a generic rejection reason without returning or logging the untrusted instruction. Offer comparison shows evidence and clearly labels supplier risk notes as unverified.
 - No external supplier, AI, or NEAR services are called. The request and generated offers are not persisted. Policy enforcement, human approval, private inference, wallets, and settlement remain out of scope for Phase 4.
 - `npm test` passed all 17 tests. `npm run lint`, `npm run typecheck`, and `npm run build` passed. A local production-server smoke test confirmed the page, health phase `agent-offer-workflow`, three simulated offers, rejection without echoing the injection text, and unchanged saved mandate state. No public preview or browser automation was run.
-- Phase 4 changes remain local and uncommitted/unpushed; no Vercel, deployment, visibility, or external supplier change occurred. Stop for Adeleke's review before Phase 5.
+- Phase 4 was committed and pushed by the coordinator at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c` on `phase-1-foundation`. No Vercel, deployment, visibility, or external supplier change occurred.
 
 ## 7. Phase 5 — policy and security
 
-- [ ] Implement deterministic budget and unit-price checks.
-- [ ] Implement approved-recipient and destination-chain checks.
-- [ ] Implement reliability and expiry checks.
-- [ ] Implement approval threshold logic.
-- [ ] Implement nonce and idempotency checks.
-- [ ] Recheck all policy rules on the server before execution.
-- [ ] Add tests for every blocked rule and one fully valid offer.
+- [x] Implement deterministic budget and unit-price checks.
+- [x] Implement approved-recipient and destination-chain checks.
+- [x] Implement reliability and expiry checks.
+- [x] Implement approval threshold logic.
+- [x] Implement nonce and idempotency checks.
+- [x] Add a server-side pre-execution recheck guard/test seam; no execution occurs in this phase.
+- [x] Add tests for every blocked rule and one fully valid offer.
+
+### Phase 5 evidence (2026-10-23)
+
+- Cross-checked the original five source PDFs in `/home/ubuntu/upload/` against the Phase 5 checklist. Added `server/policy/policy-engine.ts` as a deterministic policy layer separate from buyer parsing and supplier fixture generation. It evaluates budget, asset, unit price, exact approved-recipient membership, case-insensitive allowed-chain membership, minimum reliability, expiry, and nonce replay context against the saved mandate.
+- Hard violations return `blocked`; a missing configured unit price or an amount strictly above the human-approval threshold returns `review`; `pass` requires all configured checks to succeed below the threshold. Computed policy reasons are separate from supplier-reported risk notes. The UI labels threshold cases as `REVIEW REQUIRED` and explicitly says there is no approval action.
+- Supplier response schema now requires ISO expiry and nonce metadata. Local fixtures use a 15-minute offer expiry and distinct request-scoped nonces. `POST /api/mandates/:id/offers/simulate` requires an idempotency key, replays identical requests, and returns `409` if a key is reused with a changed request. The short-lived cache is process-local, limited to 500 entries, and stores the request digest rather than buyer text.
+- `checkOfferBeforeExecution` is a server-side guard/test seam: it strictly validates the untrusted candidate and re-evaluates current saved terms plus a caller-provided consumed-nonce set. It does not execute, persist, or consume anything; durable atomic nonce protection must be supplied by a future execution adapter.
+- `npm test` passed all 32 tests, covering every block rule, a fully valid offer, missing-price review, threshold approval, nonce replay, idempotency replay/conflict, and recheck after mandate changes. `npm run lint`, `npm run typecheck`, and `npm run build` passed.
+- A local production-server smoke test confirmed `GET /api/health` reports `policy-security`; the simulated offer results are `blocked`, `blocked`, and `review`; exact retries replay unchanged offers; changed-payload key reuse returns `409`; and the prompt-injection text is not echoed. The local server was stopped afterward.
+- Offers remain volatile and are not persisted. No supplier service, private AI, wallet, NEAR account, testnet, mainnet, approval action, settlement execution, or funds are involved. Phase 5 is local, uncommitted, and unpushed; no Vercel connection/change, deployment, publication, or visibility change occurred.
 
 ## 8. Phase 6 — private or simulated AI
 

@@ -23,6 +23,13 @@ export type SettlementMode = "simulated" | "testnet" | "live";
 
 export type PolicyResult = "not_evaluated" | "pass" | "blocked" | "review";
 
+export interface PolicyEvaluation {
+  result: Exclude<PolicyResult, "not_evaluated">;
+  reasons: string[];
+  approvalRequired: boolean;
+  evaluatedAt: string;
+}
+
 export type Constraint =
   | {
       id: string;
@@ -93,6 +100,18 @@ export interface SupplierOffer {
   evidence: string[];
   policyResult: PolicyResult;
   riskReasons: string[];
+  /** Optional on legacy illustrative seed offers; required on validated supplier responses. */
+  expiresAt?: string;
+  nonce?: string;
+  /** Separate from supplier-reported risk notes. */
+  policyEvaluation?: PolicyEvaluation;
+}
+
+export interface EvaluatedSupplierOffer extends SupplierOffer {
+  expiresAt: string;
+  nonce: string;
+  policyResult: Exclude<PolicyResult, "not_evaluated">;
+  policyEvaluation: PolicyEvaluation;
 }
 
 export interface SettlementIntent {

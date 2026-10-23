@@ -4,11 +4,11 @@ PrivateSpend Network is a constrained procurement workflow for small businesses.
 
 ## Current state
 
-The repository is at the **Phase 4 agent-offer workflow** stage. It includes mandate creation/editing, shared browser/server mandate validation, typed constraints, create/read/update API routes, and a redacted audit trail. The selected mandate also supports a deterministic buyer-request parser and three local supplier-offer fixtures. The buyer parser returns typed suggestions only; it cannot change the saved mandate. Each supplier response is validated against a strict schema, and a prompt-injection fixture is rejected before display. Offer comparison includes evidence and supplier-reported risk notes, which are explicitly unverified.
+The repository now includes the **Phase 5 policy and security** work on top of the Phase 4 agent-offer workflow. It supports mandate creation/editing, shared browser/server mandate validation, typed constraints, create/read/update API routes, and a redacted audit trail. A deterministic buyer parser returns non-binding suggestions, and three local supplier fixtures pass strict schema validation. A separate server-side policy engine checks offers against the saved mandate, showing blocked, review-required, and pass outcomes with reasons; buyer suggestions never become policy authority.
 
-The offers are **SIMULATED** local fixtures. No supplier service, AI provider, wallet, NEAR account, testnet, mainnet, or funds are used. Policy decisions are not implemented: all new offers say `NOT EVALUATED`, and there is no approval or settlement action. The buyer request and generated comparison are not persisted. The Phase 2 seed still contains illustrative offer records; their static pass/block labels are not computed policy decisions.
+Offers are **SIMULATED** local fixtures. No supplier service, AI provider, wallet, NEAR account, testnet, mainnet, or funds are used. Policy outcomes are volatile API responses and are not persisted. There is no human approval action or settlement action. The Phase 2 seed still contains illustrative offer records; their static pass/block labels are not computed policy decisions. Supplier risk notes remain unverified.
 
-Mandate data uses the Phase 2 in-memory repository. It is process-local and volatile: records and idempotency keys reset on restart and are not shared between workers or serverless instances. It is suitable for local development and tests, not durable production storage.
+Mandate data uses the Phase 2 in-memory repository. It is process-local and volatile: records and idempotency keys reset on restart and are not shared between workers or serverless instances. Offer-simulation idempotency is also process-local, expires after 15 minutes, and is not durable production storage. The buyer request is not persisted or logged; the cache stores only its digest alongside a short-lived response.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` to create or edit a mandate, inspect its audit events, parse a buyer request, and compare the three simulated offers. `GET http://localhost:3000/api/health` reports service readiness and `phase: agent-offer-workflow`; it is an infrastructure check, not a procurement decision.
+Open `http://localhost:3000` to create or edit a mandate, inspect its audit events, parse a buyer request, and compare the three simulated offers. `GET http://localhost:3000/api/health` reports service readiness and `phase: policy-security`; it is an infrastructure check, not a procurement decision.
 
 Useful checks:
 
@@ -36,6 +36,7 @@ npm run build
 - `src/domain/` — typed procurement models, mandate validation, deterministic buyer parsing, and strict offer-response validation.
 - `src/components/mandate-workspace.tsx` — mandate creation/editing, buyer parsing, simulated comparison, and audit UI.
 - `server/agents/` — deterministic local supplier agents and rejected prompt-injection fixture.
+- `server/policy/` — deterministic policy evaluation, a no-execution pre-execution recheck guard, and volatile idempotency support.
 - `server/persistence/` — in-memory repository, seed fixtures, and the persistence replacement boundary.
 - `tests/` — Node test-runner coverage for transitions, validation, agent responses, offer API behavior, idempotency, and audit redaction.
 - `docs/agent-pack/` — product, architecture, design, execution checklist, and agent-memory documents.
@@ -51,4 +52,4 @@ The currently published [NEAR HACKATHON rules](https://nearhackathon.com/HACKATH
 
 ## Status
 
-Phase 4 is implemented locally and awaits Adeleke's review. Phase 5 and later remain out of scope until separately approved. No Phase 4 commit or push, deployment, Vercel change, or repository-visibility change has been made. See `docs/agent-pack/04-TASKS.md` for evidence-backed phase status and `memory.md` for durable decisions.
+Phase 4 was committed and pushed by the coordinator to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. Phase 5 policy/security is implemented locally and remains uncommitted/unpushed for review. No Vercel connection or change, deployment, publication, or visibility change has been made. See `docs/agent-pack/04-TASKS.md` for evidence-backed status and `memory.md` for durable decisions.

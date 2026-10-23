@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { ProcurementMandate, SupplierOffer } from "../../src/domain/models";
 import {
   toSupplierOffer,
@@ -14,6 +15,11 @@ export interface RejectedSupplierResponse {
 export interface SupplierAgentRun {
   offers: SupplierOffer[];
   rejectedResponses: RejectedSupplierResponse[];
+}
+
+export interface SupplierAgentRunOptions {
+  now?: Date;
+  idempotencyKey?: string;
 }
 
 interface SanitizedSupplierBrief {
@@ -34,11 +40,16 @@ function supplierBrief(mandate: ProcurementMandate): SanitizedSupplierBrief {
   };
 }
 
-function buildResponses(brief: SanitizedSupplierBrief): unknown[] {
+function buildResponses(
+  brief: SanitizedSupplierBrief,
+  now: Date,
+  noncePrefix: string,
+): unknown[] {
   const budget = brief.budget;
   const maxUnitPrice = brief.maxUnitPrice;
   const commonEvidence =
     "Deterministic local demo response; no external supplier was contacted.";
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1_000).toISOString();
   const aster: SupplierAgentResponse = {
     id: `offer-aster-${brief.mandateId}`,
     mandateId: brief.mandateId,
@@ -51,6 +62,8 @@ function buildResponses(brief: SanitizedSupplierBrief): unknown[] {
     reliabilityScore: 0.91,
     evidence: [commonEvidence, "Quote fixture includes variable-usage terms."],
     riskNotes: ["Supplier note (unverified): variable usage may change the final amount."],
+    expiresAt,
+    nonce: `${noncePrefix}:aster`,
   };
   const northstar: SupplierAgentResponse = {
     id: `offer-northstar-${brief.mandateId}`,
@@ -64,6 +77,8 @@ function buildResponses(brief: SanitizedSupplierBrief): unknown[] {
     reliabilityScore: 0.97,
     evidence: [commonEvidence, "Quote fixture uses a supplier-proposed demo recipient."],
     riskNotes: ["Supplier note (unverified): recipient ownership needs independent verification."],
+    expiresAt,
+    nonce: `${noncePrefix}:northstar`,
   };
   const ember: SupplierAgentResponse = {
     id: `offer-ember-${brief.mandateId}`,
@@ -77,6 +92,8 @@ function buildResponses(brief: SanitizedSupplierBrief): unknown[] {
     reliabilityScore: 0.98,
     evidence: [commonEvidence, "Quote fixture has a fixed monthly demo amount."],
     riskNotes: ["Supplier note (unverified): no live service-level evidence is attached."],
+    expiresAt,
+    nonce: `${noncePrefix}:ember`,
   };
   const injectionFixture = {
     ...northstar,
@@ -90,11 +107,16 @@ function buildResponses(brief: SanitizedSupplierBrief): unknown[] {
 /** Every deterministic fixture is passed through the same strict response validator. */
 export function runDeterministicSupplierAgents(
   mandate: ProcurementMandate,
+  options: SupplierAgentRunOptions = {},
 ): SupplierAgentRun {
+  const now = options.now ?? new Date();
+  const noncePrefix = options.idempotencyKey
+    ? createHash("sha256").update(options.idempotencyKey).digest("hex").slice(0, 16)
+    : "local-fixture";
   const validOffers: SupplierOffer[] = [];
   const rejectedResponses: RejectedSupplierResponse[] = [];
 
-  for (const response of buildResponses(supplierBrief(mandate))) {
+  for (const response of buildResponses(supplierBrief(mandate), now, noncePrefix)) {
     const parsed = validateSupplierAgentResponse(response, mandate.id);
     if (parsed.success) {
       validOffers.push(toSupplierOffer(parsed.data));

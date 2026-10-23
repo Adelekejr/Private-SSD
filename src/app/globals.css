@@ -354,7 +354,8 @@ h1 {
 .state-draft,
 .state-open,
 .state-approved,
-.state-settled {
+.state-settled,
+.state-pass {
   color: var(--green-readable);
   border-color: rgb(8 122 67 / 35%);
 }
@@ -627,6 +628,21 @@ h1 {
   padding: 12px;
   border: 1px solid var(--line);
   background: white;
+}
+.offer-nonce {
+  font-size: 8px !important;
+  font-weight: 500 !important;
+}
+.offer-policy-group {
+  border-top-color: var(--line);
+}
+.policy-approval-note {
+  padding: 7px 8px;
+  border-left: 2px solid var(--review);
+  color: var(--review) !important;
+  background: var(--soft);
+  font-family: var(--font-mono);
+  letter-spacing: 0.025em;
 }
 .offer-facts {
   display: grid;

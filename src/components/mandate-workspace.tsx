@@ -5,9 +5,9 @@ import { useRef, useState, type FormEvent } from "react";
 import type {
   AuditEvent,
   Constraint,
+  EvaluatedSupplierOffer,
   PrivacyMode,
   ProcurementMandate,
-  SupplierOffer,
 } from "../domain/models";
 import type { BuyerRequestProposal } from "../domain/buyer-request-parser";
 import {
@@ -35,8 +35,10 @@ type SaveResponse = {
 };
 type OfferRunResponse = {
   mode: "SIMULATED";
+  policyAuthority: "SERVER";
+  idempotency?: "NEW" | "REPLAYED";
   buyerProposal: BuyerRequestProposal;
-  offers: SupplierOffer[];
+  offers: EvaluatedSupplierOffer[];
   rejectedResponses: Array<{
     supplierAgent: string;
     fixtureType: "prompt-injection" | "malformed-response";
@@ -207,6 +209,7 @@ export function MandateWorkspace({
   const [offerMessage, setOfferMessage] = useState("");
   const [runningOffers, setRunningOffers] = useState(false);
   const idempotencyKey = useRef<string | null>(null);
+  const offerRequestKey = useRef<string | null>(null);
 
   const selectedMandate = mandates.find((mandate) => mandate.id === selectedId) ?? null;
   const selectedPrivacy = privacyModes.find(
@@ -227,6 +230,7 @@ export function MandateWorkspace({
     setMessage("");
     setOfferRun(null);
     setOfferMessage("");
+    offerRequestKey.current = null;
     setBuyerRequest("");
     idempotencyKey.current = null;
   }
@@ -239,6 +243,7 @@ export function MandateWorkspace({
     setMessage("");
     setOfferRun(null);
     setOfferMessage("");
+    offerRequestKey.current = null;
     idempotencyKey.current = null;
   }
 
@@ -251,6 +256,7 @@ export function MandateWorkspace({
     setBuyerRequest(buyerPromptForMandate(mandate));
     setOfferRun(null);
     setOfferMessage("");
+    offerRequestKey.current = null;
     try {
       const response = await fetch(`/api/mandates/${encodeURIComponent(mandate.id)}`);
       const payload = (await response.json()) as SaveResponse;
@@ -347,12 +353,16 @@ export function MandateWorkspace({
     if (!selectedMandate) return;
     setRunningOffers(true);
     setOfferMessage("");
+    offerRequestKey.current ??= globalThis.crypto.randomUUID();
     try {
       const response = await fetch(
         `/api/mandates/${encodeURIComponent(selectedMandate.id)}/offers/simulate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": offerRequestKey.current,
+          },
           body: JSON.stringify({ requestText: buyerRequest }),
         },
       );
@@ -361,7 +371,8 @@ export function MandateWorkspace({
         throw new Error(payload.error ?? "Could not generate offer proposals.");
       }
       setOfferRun(payload);
-      setOfferMessage("Three local demo offers were schema-checked; no supplier was contacted.");
+      offerRequestKey.current = null;
+      setOfferMessage("Three local offers were evaluated against the saved mandate on the server; no supplier was contacted and no execution occurred.");
     } catch (error) {
       setOfferRun(null);
       setOfferMessage(
@@ -382,7 +393,7 @@ export function MandateWorkspace({
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
         <div className="header-meta">
-          <span className="phase-tag">AGENT OFFER WORKFLOW / PHASE 04</span>
+          <span className="phase-tag">POLICY &amp; SECURITY / PHASE 05</span>
           <span className="workspace-tag">DEMO WORKSPACE · VOLATILE STORAGE</span>
         </div>
       </header>
@@ -399,8 +410,8 @@ export function MandateWorkspace({
         <span className="workflow-available">
           <b>01</b> MANDATE
         </span>
-        <span className="workflow-current" aria-current="step"><b>02</b> OFFERS</span>
-        <span className="workflow-future"><b>03</b> POLICY · LATER PHASE</span>
+        <span className="workflow-available"><b>02</b> OFFERS</span>
+        <span className="workflow-current" aria-current="step"><b>03</b> POLICY</span>
         <span className="workflow-future"><b>04</b> APPROVAL · LATER PHASE</span>
         <span className="workflow-future"><b>05</b> SETTLEMENT · LATER PHASE</span>
         <span className="workflow-available"><b>06</b> AUDIT TRAIL · AVAILABLE</span>
@@ -523,7 +534,7 @@ export function MandateWorkspace({
                 <span>{selectedPrivacy?.note ?? "This value is stored as a mandate preference only."}</span>
               </div>
               <p className="phase-boundary">
-                Supplier offers are proposals only. Deterministic policy checks, human approval, private inference, and settlement remain later phases.
+                Offers are proposals only. Policy is evaluated deterministically on the server; human approval, private inference, and settlement are not implemented here.
               </p>
             </div>
           ) : (
@@ -640,12 +651,12 @@ export function MandateWorkspace({
               <div className="offer-section-heading">
                 <div>
                   <p className="eyebrow">BUYER AGENT / DETERMINISTIC PARSER</p>
-                  <h3 id="offers-title">Compare supplier proposals</h3>
+                <h3 id="offers-title">Compare policy-checked proposals</h3>
                 </div>
                 <span className="state-pill">SIMULATED</span>
               </div>
               <p className="offer-intro">
-                Parse a request into typed suggestions, then compare three local demo offers. The saved mandate remains authoritative; no supplier is contacted.
+                Parse a request into non-binding suggestions, then evaluate three local offers against the saved mandate on the server. No supplier is contacted.
               </p>
               <div className="form-field buyer-request-field">
                 <label htmlFor="buyer-request">Buyer request</label>
@@ -660,6 +671,7 @@ export function MandateWorkspace({
                     setBuyerRequest(event.target.value);
                     setOfferRun(null);
                     setOfferMessage("");
+                    offerRequestKey.current = null;
                   }}
                 />
                 <span className="field-hint" id="buyer-request-hint">
@@ -673,7 +685,7 @@ export function MandateWorkspace({
                   onClick={() => void simulateOffers()}
                   disabled={runningOffers}
                 >
-                  {runningOffers ? "Generating proposals…" : "Parse request + generate offers"}
+                  {runningOffers ? "Running server-side checks…" : "Parse request + evaluate offers"}
                 </button>
                 <span className="offer-simulation-note">LOCAL FIXTURES · NO EXTERNAL CALLS</span>
               </div>
@@ -722,7 +734,7 @@ export function MandateWorkspace({
                         <p className="eyebrow">SUPPLIER AGENTS / THREE DETERMINISTIC FIXTURES</p>
                         <h4 id="comparison-title">Offer comparison</h4>
                       </div>
-                      <span className="state-pill state-not-evaluated">POLICY NOT RUN</span>
+                      <span className="state-pill state-pass">SERVER POLICY APPLIED</span>
                     </div>
                     <div className="offer-list">
                       {offerRun.offers.map((offer) => (
@@ -732,7 +744,9 @@ export function MandateWorkspace({
                               <p className="eyebrow">SUPPLIER PROPOSAL</p>
                               <h5>{offer.supplierAgent}</h5>
                             </div>
-                            <span className="state-pill state-not-evaluated">NOT EVALUATED</span>
+                            <span className={`state-pill state-${offer.policyResult}`}>
+                              {offer.policyResult === "review" ? "REVIEW REQUIRED" : offer.policyResult.toUpperCase()}
+                            </span>
                           </div>
                           <dl className="offer-facts">
                             <div><dt>Total amount</dt><dd>{formatMoney(offer.amount, offer.asset)}</dd></div>
@@ -740,7 +754,18 @@ export function MandateWorkspace({
                             <div><dt>Reliability claim</dt><dd>{(offer.reliabilityScore * 100).toFixed(0)}%</dd></div>
                             <div><dt>Destination</dt><dd>{offer.destinationChain}</dd></div>
                             <div><dt>Proposed recipient</dt><dd>{offer.recipient}</dd></div>
+                            <div><dt>Offer expires</dt><dd>{formatDate(offer.expiresAt)}</dd></div>
+                            <div><dt>Nonce</dt><dd className="mono offer-nonce">{offer.nonce}</dd></div>
                           </dl>
+                          <div className="offer-evidence-group offer-policy-group">
+                            <p className="offer-detail-label">DETERMINISTIC POLICY · SERVER-EVALUATED</p>
+                            {offer.policyEvaluation.reasons.length > 0 ? (
+                              <ul>{offer.policyEvaluation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+                            ) : <p>All configured deterministic policy checks passed.</p>}
+                            {offer.policyEvaluation.approvalRequired ? (
+                              <p className="policy-approval-note">HUMAN APPROVAL REQUIRED · No approval action is available in this phase.</p>
+                            ) : null}
+                          </div>
                           <div className="offer-evidence-group">
                             <p className="offer-detail-label">EVIDENCE</p>
                             <ul>{offer.evidence.map((item) => <li key={item}>{item}</li>)}</ul>
@@ -775,7 +800,7 @@ export function MandateWorkspace({
                     ) : null}
                   </section>
                   <p className="phase-boundary">
-                    These are local demo proposals. Risk notes are unverified, and policy pass/review/block decisions are deliberately deferred to Phase 5.
+                    These are local demo proposals. Policy outcomes are deterministic and computed on the server from the saved mandate; supplier risk notes remain unverified. No approval or execution action exists.
                   </p>
                 </>
               )}
@@ -812,8 +837,8 @@ export function MandateWorkspace({
       </div>
 
       <footer className="footer-line workspace-footer">
-        <span>PHASE 03 · MANDATE CREATION + EDITING</span>
-        <span className="footer-note">NO SUPPLIERS CONTACTED · NO POLICY RUN · NO FUNDS MOVED</span>
+        <span>PHASE 05 · POLICY + SECURITY</span>
+        <span className="footer-note">NO SUPPLIERS CONTACTED · NO APPROVAL OR EXECUTION · NO FUNDS MOVED</span>
       </footer>
     </main>
   );

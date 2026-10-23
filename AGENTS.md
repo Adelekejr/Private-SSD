@@ -19,7 +19,7 @@ Then state the product purpose, completed work, next unchecked task, assumptions
 - Treat the current human instruction as higher priority than the durable project documents. Work only on the explicitly approved stage; ask before beginning any later product-workflow phase.
 - For each task, identify intended files and acceptance checks, make the smallest coherent change, run relevant checks, record evidence in `docs/agent-pack/04-TASKS.md`, and update durable decisions in `memory.md`.
 - Do not mark work complete without verification. Be explicit about what is implemented, simulated, or absent.
-- Phase 4 is authorized for local implementation and review only. Do not commit or push Phase 4, publish, change repository visibility, deploy, or modify Vercel without separate explicit approval from Adeleke. This overrides the generic checkpoint-commit suggestion in the source agent-memory document.
+- Phase 4 was committed and pushed to `phase-1-foundation` at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. Phase 5 is authorized for local implementation/review only; do not commit or push Phase 5, publish, change repository visibility, deploy, or connect/modify Vercel without separate explicit approval from Adeleke. This overrides the generic checkpoint-commit suggestion in the source agent-memory document.
 - Do not copy or import code from InvoiceLens. This repository is a separate, newly created project.
 
 ## Product and safety boundaries
