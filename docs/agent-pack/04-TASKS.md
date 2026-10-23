@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phases 1–8 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through commit `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation was authorized and completed locally; evidence is recorded below. Keep Phase 9 documentation updates uncommitted and unpushed, and stop before Phase 10 until separately approved. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only a threshold-only `REVIEW REQUIRED` offer may proceed after explicit human approval. Do not call or integrate providers, suppliers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
+**Current scope rule (2026-10-23):** Phases 1–9 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`; Phase 9 documentation is at `797feaf8073081d9cc8a2094ba47d8d7d813aec5`. The currently approved Phase 10 slice is local documentation only: improve the README, write a 90–120 second local demo run-of-show, and update this checklist and `memory.md` with verified progress. Do not change application code or commit/push Phase 10 without separate approval. Stop for owner review after this local slice. Do not collect submission data, generate submission JSON, publish the repository or an X post, submit, change repository visibility, connect/deploy Vercel, integrate any provider/wallet/chain or live/testnet path, or use funds. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only the threshold-only `REVIEW REQUIRED` offer may advance after explicit human approval in the simulator.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -181,14 +181,21 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 
 ## 12. Phase 10 — submission readiness
 
-- [ ] Write `README.md` as do X → see Y testing instructions.
-- [ ] Include threat model, architecture, limitations, and NEAR integration explanation.
-- [ ] Record a 90–120 second demo.
-- [ ] Ask the human to publish the repository.
-- [ ] Ask the human to publish the X demo post.
-- [ ] Collect the human’s project name, lead name, email, team size, tracks, mainnet payout address, repository URL, demo URL, and final description.
-- [ ] Print the exact submission JSON for human confirmation.
-- [ ] Submit exactly once after confirmation.
+- [x] Write `README.md` with reproducible local “do X → see Y” judge steps.
+- [x] Explain the implemented threat model, architecture, limitations, and honest NEAR relationship in `README.md`.
+- [x] Write a 90–120 second local demo run-of-show/script in `docs/demo-run-of-show.md`. This is a script, not a recorded video.
+- [ ] Record and verify a 90–120 second demo video locally.
+- [ ] After owner review and separate authorization, have the human publish the repository and verify public access.
+- [ ] After owner review and separate authorization, have the human publish the demo post on X.
+- [ ] Only when authorized, collect the human’s project name, lead name, email, team size, tracks, mainnet payout address, repository URL, demo URL, and final description. Do not invent or prefill values.
+- [ ] Only after the owner reviews all submission values, print the exact submission JSON for confirmation.
+- [ ] Submit exactly once and only after the owner explicitly confirms the exact payload.
+
+### Phase 10 local documentation evidence (2026-10-23)
+
+- Reviewed the app source, seeded fixture, policy engine, simulated inference and settlement adapters, and existing tests before writing the README workflow and demo script. The README uses the exact UI controls and expected results; the demo script targets 115 seconds and remains local-only.
+- Existing Phase 9 evidence records a clean install, all 38 tests, lint, typecheck, production build, the local production-server judge flow, and headless Chromium checks at 320px, 375px, and 1280px. No application-code change was needed for this documentation slice.
+- No video was recorded or published. No submission values were collected, JSON generated, repository visibility changed, X post published, deployment performed, integration started, commit/push made, or submission sent. These local documentation changes remain pending owner review.
 
 ## 13. Definition of done
 

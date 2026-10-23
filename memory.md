@@ -4,7 +4,7 @@
 
 - Product: PrivateSpend Network, a constrained procurement workflow for small businesses. Agents may propose; deterministic constraints decide; a human retains authority before any real settlement.
 - Repository: private `Adelekejr/Private-SSD`, branch `phase-1-foundation`.
-- Phases 1–8 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through commit `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation is complete locally; its documentation updates remain uncommitted/unpushed.
+- Phases 1–9 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`; Phase 9 documentation is at `797feaf8073081d9cc8a2094ba47d8d7d813aec5`. The current Phase 10 work is a narrowly approved, local documentation slice and remains uncommitted/unpushed pending owner review.
 - Phase 3 provides responsive mandate creation/editing, shared browser/server validation, `GET`/`POST /api/mandates` and `GET`/`PUT /api/mandates/:id`, typed constraint construction, process-local idempotency, and redacted create/update audit events.
 - Phase 4 adds a deterministic buyer-request parser that proposes typed constraints without changing the saved mandate; three deterministic local supplier fixtures; strict offer-response validation; a rejected prompt-injection fixture; evidence and unverified supplier risk notes; and the simulated offers API.
 - Phase 5 adds deterministic server policy evaluation for budget, asset, unit price, approved recipient, allowed destination, reliability, expiry, nonce replay, and approval threshold. It distinguishes `blocked`, `review`, and `pass`; missing configured unit price requires review. Policy evidence is kept separate from supplier risk notes.
@@ -24,7 +24,7 @@
 
 ## Important scope and source notes
 
-- The current owner instruction authorized Phase 9 validation after Phase 8 was pushed at `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation is complete locally; documentation changes remain uncommitted/unpushed. Stop before Phase 10 until separately approved. Preserve the 1,000 USDC threshold and 4,920 USDC demo offer; only a threshold-only `REVIEW REQUIRED` outcome may advance after explicit human approval. Do not call or integrate external providers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
+- The current owner instruction records Phase 9 as committed/pushed at `797feaf8073081d9cc8a2094ba47d8d7d813aec5` and authorizes only a local Phase 10 documentation slice: README judge steps/threat model/architecture/limitations/NEAR explanation, a local 90–120 second demo run-of-show, and verified checklist/memory updates. Do not change application code or commit/push this Phase 10 slice without separate approval. Stop for owner review after it. Do not publish the repository or an X post, collect submission data, generate JSON, submit, change visibility, connect/deploy Vercel, call providers, connect wallets, use live/testnet/mainnet routes, or use funds. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only threshold-only `REVIEW REQUIRED` may advance after explicit human approval in simulation.
 - Phase 4 was committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`; Phase 6 was committed and pushed at `dd44a99274b63ca73a73c302fcaedc402d01120f`.
 - The original five source PDFs under `/home/ubuntu/upload/` were cross-checked against the Phase 5, Phase 6, Phase 7, and Phase 8 checklists. Phase 8 follows the simulation-first boundary and keeps external provider and testnet routes out of scope.
 - `docs/agent-pack/05-AGENT-MEMORY.md` contains a historical claim about an existing PrivateSpend dashboard that conflicts with the verified repository baseline. Treat it as historical source context, not as current implementation evidence. Do not search InvoiceLens for reusable code or assume an earlier PrivateSpend implementation exists.
@@ -41,6 +41,14 @@
 - The health endpoint reports infrastructure readiness and `settlement-simulation`; it does not authorize or execute procurement.
 - The official hackathon rules should be re-read on 1 November 2026 and before submission.
 
+## Phase 10 local documentation checkpoint (2026-10-23)
+
+- Updated `README.md` with reproducible local judge steps, an implementation-grounded threat model and architecture overview, explicit limitations, the honest NEAR relationship, prior Phase 9 validation evidence, and correct repository/phase status.
+- Added `docs/demo-run-of-show.md`, a 115-second script based on the current seeded mandate, exact UI controls, and tested simulation outcomes. It is a run-of-show only; no recording or publication was made.
+- Updated `docs/agent-pack/04-TASKS.md` to mark only the verified local documentation/script items complete. Recording the actual demo and every public/submission item remain unchecked. The phase is not complete.
+- Inspected the current UI, seed data, server policy, simulated adapters, storage boundary, and existing tests. No application code change was required. Phase 9's existing evidence remains the verification baseline; all runtime data and settlement state remain volatile and process-local.
+- The README, checklist, memory, run-of-show, and operating-scope update are local and uncommitted/unpushed. Stop for owner review. No repo visibility change, X post, Vercel/deployment action, provider/wallet/NEAR integration, submission data collection, JSON generation, or submission occurred.
+
 ## Next step
 
-Phase 9 validation is complete and documented locally. Stop for Adeleke’s review before Phase 10. Do not commit or push Phase 9, call providers, use wallets/live/testnet routes/funds, connect or modify Vercel, deploy, publish, or change repository visibility. Offer-run, settlement, receipt, audit, nonce, and idempotency state remains volatile and process-local; durable storage was not added or validated.
+Stop for Adeleke’s review of the local Phase 10 documentation files. Do not commit/push them, record/publish a demo, change repository visibility, publish an X post, collect or invent submission values, generate submission JSON, or submit without a later separate owner instruction. Offer-run, settlement, receipt, audit, nonce, and idempotency state remains volatile and process-local; durable storage was not added or validated.
