@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phases 1–7 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 frontend/design work is complete locally for owner review. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only a threshold-only `REVIEW REQUIRED` offer may proceed after explicit human approval. Keep Phase 8 uncommitted and unpushed, stop here, and do not begin Phase 9. Do not call or integrate providers, suppliers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
+**Current scope rule (2026-10-23):** Phases 1–8 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through commit `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation was authorized and completed locally; evidence is recorded below. Keep Phase 9 documentation updates uncommitted and unpushed, and stop before Phase 10 until separately approved. Preserve the 1,000 USDC threshold and 4,920 USDC offer; only a threshold-only `REVIEW REQUIRED` offer may proceed after explicit human approval. Do not call or integrate providers, suppliers, wallets, live/testnet routes, use funds, connect or modify Vercel, deploy, publish, or change repository visibility.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -162,13 +162,22 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 
 ## 11. Phase 9 — validation
 
-- [ ] Run unit tests for policy, schema validation, and status transitions.
-- [ ] Run the end-to-end judge flow from clean state.
-- [ ] Verify unsafe offers cannot reach execution.
-- [ ] Verify approval is required above the threshold.
-- [ ] Verify simulated mode is visible everywhere it matters.
-- [ ] Run a clean install and production build.
-- [ ] Inspect server logs for secrets or raw sensitive input.
+- [x] Run unit tests for policy, schema validation, and status transitions.
+- [x] Run the end-to-end judge flow from clean state.
+- [x] Verify unsafe offers cannot reach execution.
+- [x] Verify approval is required above the threshold.
+- [x] Verify simulated mode is visible everywhere it matters.
+- [x] Run a clean install and production build.
+- [x] Inspect server logs for secrets or raw sensitive input.
+
+### Phase 9 evidence (2026-10-23)
+
+- Cross-checked the five supplied source PDFs against the Phase 9 checklist. The review confirmed the need to validate deterministic server policy, schema rejection, explicit human approval, simulation honesty, redacted evidence, clean install/build, and the complete local judge flow. The validation remained simulated-only.
+- `npm ci --no-audit --no-fund` completed successfully with Node.js 24.19.0 and npm 11.17.0. `npm test` passed all 38 tests (0 failures), including policy rules, schema/prompt-injection rejection, invalid transition immutability, idempotency/nonce behavior, approval gating, quote expiry, server rechecks, and audit redaction. `npm run lint`, `npm run typecheck`, and `npm run build` passed; the optimized Next.js 16.4.3 build completed and emitted the expected app/API routes.
+- From a fresh local production-server process, `GET /api/health` returned `settlement-simulation`; the seeded mandate retained the 1,000 USDC threshold. The three offers were Aster Compute (5,180 USDC, `BLOCKED`), Northstar Compute (4,800 USDC, `BLOCKED`), and Ember Compute (4,920 USDC, threshold-only `REVIEW`). Both blocked offers were rejected from quoting with HTTP 422. The Ember quote stayed `REVIEW`/pending; execution before approval returned 403 and unconfirmed approval returned 400. After explicit approval, the policy label remained `REVIEW`, execution returned a `SIMULATED` receipt with `moneyMoved: false` and no transaction hash, status refreshed as simulated, and all audit events remained redacted.
+- Headless Chromium triggered the comparison in the UI and verified the workflow route and `SIMULATED`, `BLOCKED`, and `REVIEW REQUIRED` labels at fresh 320px, 375px, and 1280px page loads. The page fit each visual viewport; there were no browser runtime errors or failed network requests. A resize-only measurement on an already-loaded desktop page initially reported a wider layout; fresh page loads at each target width passed, so no CSS fix was warranted.
+- A synthetic sensitive-input marker sent in the offer request did not appear in captured server output; the console-capture test also confirmed that raw request text was absent from application logs and the API response. The production server emitted startup output only, with no request body or secret values.
+- Offer-run, quote, approval, receipt, audit, nonce, and idempotency state remains process-local and volatile, resets on restart, and is not shared across workers/serverless instances. No code fix was required. No provider, supplier, wallet, key, chain, testnet, mainnet, funds, Vercel, deployment, publication, commit, or push was used. Phase 10 remains unchecked and unstarted.
 
 ## 12. Phase 10 — submission readiness
 

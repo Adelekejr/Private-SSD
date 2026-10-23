@@ -4,7 +4,7 @@ PrivateSpend Network is a constrained procurement workflow for small businesses.
 
 ## Current state
 
-The repository includes the Phase 5 deterministic policy/security work, Phase 6 simulated private-inference boundary, Phase 7 local simulated settlement lifecycle, and Phase 8 frontend/design refinements. The six-stage route reports current workflow status and links to stage panels when available; empty, loading, blocked, expired, and error states have explicit text labels. The interface retains the mandate form, local offer comparison, deterministic policy evidence, explicit human approval, simulated quote/receipt, and redacted audit trail.
+The repository includes the Phase 5 deterministic policy/security work, Phase 6 simulated private-inference boundary, Phase 7 local simulated settlement lifecycle, Phase 8 frontend/design refinements, and Phase 9 validation evidence. The six-stage route reports current workflow status and links to stage panels when available; empty, loading, blocked, expired, and error states have explicit text labels. The interface retains the mandate form, local offer comparison, deterministic policy evidence, explicit human approval, simulated quote/receipt, and redacted audit trail.
 
 The demo remains at a **1,000 USDC approval threshold** and retains the **4,920 USDC Ember Compute offer**. The server-computed policy result stays `REVIEW REQUIRED` because the offer exceeds the threshold. A threshold-only review may receive a quote, but it advances only after a separate explicit human approval; approval does not rewrite the policy result. `BLOCKED` offers and other review outcomes, including a missing configured unit price, cannot enter the settlement lifecycle. The server revalidates quote expiry, destination, amount, asset, and recipient immediately before simulated receipt creation.
 
@@ -30,6 +30,13 @@ npm test
 npm run build
 ```
 
+## Phase 9 validation evidence (2026-10-23)
+
+- A clean `npm ci --no-audit --no-fund` completed with Node.js 24.19.0 and npm 11.17.0. `npm test` passed all 38 tests; lint, typecheck, and the optimized Next.js 16.4.3 production build passed.
+- A fresh local production server completed the seeded judge flow at the 1,000 USDC threshold: Aster Compute (5,180 USDC) and Northstar Compute (4,800 USDC) remained `BLOCKED`; both quote requests returned HTTP 422. Ember Compute (4,920 USDC) remained threshold-only `REVIEW`, could not execute before explicit human approval (HTTP 403), and yielded a `SIMULATED` receipt only after approval. The receipt reported `moneyMoved: false` and contained no transaction hash; audit events remained redacted.
+- Headless Chromium triggered the offer comparison and displayed `SIMULATED`, `BLOCKED`, and `REVIEW REQUIRED` at fresh 320px, 375px, and 1280px page loads, with no horizontal overflow, browser runtime errors, or failed network requests. A synthetic sensitive-input marker did not appear in captured server output; existing console-capture tests also verify it is absent from application logs and the API response.
+- Offer runs, quotes, approvals, receipts, audit entries, nonce state, and idempotency state remain volatile process-local demo data. They reset on restart and are not shared across workers or serverless instances. No provider, supplier, wallet, key, chain, testnet, mainnet, funds, Vercel, or deployment was used.
+
 ## Project map
 
 - `src/app/` — Next.js workspace, health endpoint, mandate APIs, offer simulation, and simulated settlement quote/approval/execute/status APIs.
@@ -54,4 +61,4 @@ The currently published [NEAR HACKATHON rules](https://nearhackathon.com/HACKATH
 
 ## Status
 
-Phases 1–7 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 is complete locally for owner review and remains uncommitted/unpushed; Phase 9 has not started. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change has been made. See `docs/agent-pack/04-TASKS.md` for Phase 8 evidence and `memory.md` for durable decisions.
+Phases 1–8 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through commit `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation is complete locally; its documentation updates remain uncommitted and unpushed. Phase 10 has not started and requires separate approval. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change has been made. See `docs/agent-pack/04-TASKS.md` for Phase 9 evidence and `memory.md` for durable decisions.

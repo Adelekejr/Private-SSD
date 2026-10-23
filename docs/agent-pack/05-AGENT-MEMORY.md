@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-Phases 1–7 are committed and pushed by the coordinator to `phase-1-foundation` at `6bcb427a9e1a8f69dac7a988944e1b214051f0d7`. Phase 8 frontend/design work was authorized and is complete locally for owner review. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Keep Phase 8 uncommitted and unpushed; stop before Phase 9. Only a threshold-only `REVIEW REQUIRED` result can proceed after explicit human approval; blocked and unrelated review results remain ineligible. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change is authorized. This live scope supersedes older phase-only approval notes.
+Phases 1–8 are committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, through commit `1165ae854b62056cdf45e18d509d98a8c791719c`. Phase 9 validation is complete locally; its documentation changes remain uncommitted/unpushed. Stop before Phase 10 until separately approved. Preserve the 1,000 USDC threshold and 4,920 USDC offer. Only a threshold-only `REVIEW REQUIRED` result can proceed after explicit human approval; blocked and unrelated review results remain ineligible. No provider, supplier, wallet, live/testnet route, funds, Vercel connection/change, deployment, publication, or visibility change is authorized. This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -123,6 +123,12 @@ Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code e
 - Verified the unchanged 1,000 USDC threshold and 4,920 USDC review-required offer, explicit human approval, and simulation-only receipt with no money moved. Offer, quote, and audit state remains volatile and process-local; no persistence changes were made.
 - All 38 tests, lint, typecheck, production build, and local production-browser smoke passed. Browser smoke covered the responsive widths, route targets, blocked/review policy states, an expiry/error response injected only in the browser, approval gating, receipt, keyboard focus, reduced motion, and redacted audit display.
 - No provider, supplier, wallet, key, live/testnet route, funds, Vercel, deployment, publication, or visibility change was used. Phase 8 remains uncommitted/unpushed for owner review; Phase 9 remains unstarted.
+
+### 7.8 Phase 9 checkpoint (2026-10-23)
+
+- Clean install, all 38 tests, lint, typecheck, and the optimized production build passed. Local production API rehearsal confirmed two blocked offers cannot be quoted, only the 4,920 USDC threshold-only review may proceed after explicit approval, the review label remains unchanged, and the final receipt is simulated with `moneyMoved: false` and redacted audit evidence.
+- Headless Chromium verified visible `SIMULATED`, `BLOCKED`, and `REVIEW REQUIRED` states at fresh 320px, 375px, and 1280px loads, with no horizontal overflow, runtime errors, or failed network requests. The synthetic sensitive marker did not appear in captured server output or the API response.
+- No code fix was needed. No provider, wallet, live/testnet route, funds, Vercel, deployment, publication, commit, or push was used. Offer/settlement/audit/idempotency state remains volatile and process-local; Phase 10 remains unstarted and requires separate approval.
 
 ## 8. What not to do
 

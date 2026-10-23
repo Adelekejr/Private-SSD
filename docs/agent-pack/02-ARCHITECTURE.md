@@ -188,7 +188,7 @@ Optional for onboarding or low-value actions. Do not let gas sponsorship complic
 
 A Vercel-style request-driven deployment can host the frontend and serverless API handlers. Long-running agent workers, scheduled jobs, or persistent streams should be avoided in the first demo or moved to a separate worker service. Use a free-tier deployment only after verifying current limits. A static frontend plus serverless endpoints is enough for the judge flow.
 
-Deployment, Vercel changes, commits, pushes, and visibility changes require separate explicit human approval. Phase 8 local frontend/design refinements are complete for owner review; no Phase 8 commit/push, deployment, or Vercel work is authorized, and Phase 9 remains unstarted.
+Deployment, Vercel changes, commits, pushes, and visibility changes require separate explicit human approval. Phase 8 was pushed at `1165ae854b62056cdf45e18d509d98a8c791719c`; Phase 9 validation is complete locally and its documentation changes remain uncommitted/unpushed. No Vercel change or deployment occurred. Stop before Phase 10 until separately approved.
 
 ## 11. Failure behavior
 
