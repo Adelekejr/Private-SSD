@@ -9,6 +9,7 @@ import type {
   PrivacyMode,
   ProcurementMandate,
 } from "../domain/models";
+import type { InferenceStatus } from "../domain/inference";
 import type { BuyerRequestProposal } from "../domain/buyer-request-parser";
 import {
   parseMandateTerms,
@@ -36,6 +37,7 @@ type SaveResponse = {
 type OfferRunResponse = {
   mode: "SIMULATED";
   policyAuthority: "SERVER";
+  inferenceStatus: InferenceStatus;
   idempotency?: "NEW" | "REPLAYED";
   buyerProposal: BuyerRequestProposal;
   offers: EvaluatedSupplierOffer[];
@@ -51,17 +53,17 @@ const privacyModes: { value: PrivacyMode; label: string; note: string }[] = [
   {
     value: "simulated",
     label: "SIMULATED",
-    note: "No private inference is connected in this phase.",
+    note: "Deterministic local fallback; no AI model or provider is contacted.",
   },
   {
     value: "private-ai",
     label: "PRIVATE AI",
-    note: "Preference only — no provider is connected.",
+    note: "Provider integration is not configured; requests currently use the local simulated fallback.",
   },
   {
     value: "private-ai-attested",
     label: "PRIVATE AI + ATTESTATION",
-    note: "Preference only — attestation is not available here.",
+    note: "No attestation is performed; requests currently use the local simulated fallback.",
   },
 ];
 
@@ -393,7 +395,7 @@ export function MandateWorkspace({
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
         <div className="header-meta">
-          <span className="phase-tag">POLICY &amp; SECURITY / PHASE 05</span>
+          <span className="phase-tag">PRIVATE / SIMULATED INFERENCE / PHASE 06</span>
           <span className="workspace-tag">DEMO WORKSPACE · VOLATILE STORAGE</span>
         </div>
       </header>
@@ -534,7 +536,7 @@ export function MandateWorkspace({
                 <span>{selectedPrivacy?.note ?? "This value is stored as a mandate preference only."}</span>
               </div>
               <p className="phase-boundary">
-                Offers are proposals only. Policy is evaluated deterministically on the server; human approval, private inference, and settlement are not implemented here.
+                Offers are proposals only. This phase uses a deterministic local fallback, not a private AI provider; human approval and settlement are not implemented here.
               </p>
             </div>
           ) : (
@@ -623,7 +625,7 @@ export function MandateWorkspace({
                 aria-describedby={errors.privacyMode ? "privacy-mode-hint privacyMode-error" : "privacy-mode-hint"}
               >
                 <legend>Privacy mode</legend>
-                <p className="field-hint" id="privacy-mode-hint">This is a mandate preference. No AI provider or attestation is connected in this phase.</p>
+                <p className="field-hint" id="privacy-mode-hint">This is a mandate preference. Current request parsing uses a deterministic local fallback; no AI provider or attestation is connected.</p>
                 <div className="privacy-options">
                   {privacyModes.map((item) => (
                     <label className={`privacy-option${form.privacyMode === item.value ? " is-checked" : ""}`} key={item.value}>
@@ -650,13 +652,13 @@ export function MandateWorkspace({
             <section className="offer-workspace" aria-labelledby="offers-title">
               <div className="offer-section-heading">
                 <div>
-                  <p className="eyebrow">BUYER AGENT / DETERMINISTIC PARSER</p>
+                  <p className="eyebrow">BUYER AGENT / LOCAL DETERMINISTIC FALLBACK</p>
                 <h3 id="offers-title">Compare policy-checked proposals</h3>
                 </div>
                 <span className="state-pill">SIMULATED</span>
               </div>
               <p className="offer-intro">
-                Parse a request into non-binding suggestions, then evaluate three local offers against the saved mandate on the server. No supplier is contacted.
+                Process the request with local deterministic rules and evaluate three local offers against the saved mandate. No AI model, external provider, or supplier is contacted.
               </p>
               <div className="form-field buyer-request-field">
                 <label htmlFor="buyer-request">Buyer request</label>
@@ -675,7 +677,7 @@ export function MandateWorkspace({
                   }}
                 />
                 <span className="field-hint" id="buyer-request-hint">
-                  Deterministic parsing only. Suggestions do not update the saved mandate or authorize spend.
+                  Local deterministic parsing only. Suggestions do not update the saved mandate or authorize spend; raw request text is not written to application logs.
                 </span>
               </div>
               <div className="offer-actions">
@@ -687,7 +689,7 @@ export function MandateWorkspace({
                 >
                   {runningOffers ? "Running server-side checks…" : "Parse request + evaluate offers"}
                 </button>
-                <span className="offer-simulation-note">LOCAL FIXTURES · NO EXTERNAL CALLS</span>
+                  <span className="offer-simulation-note">SIMULATED · NO PROVIDER OR SUPPLIER CONTACT</span>
               </div>
               {offerMessage ? (
                 <p className="offer-message" role="status" aria-live="polite">{offerMessage}</p>
@@ -699,6 +701,23 @@ export function MandateWorkspace({
                 </p>
               ) : (
                 <>
+                  <section className="inference-status" aria-labelledby="inference-status-title">
+                    <div className="offer-section-heading">
+                      <div>
+                        <p className="eyebrow">INFERENCE PROVENANCE</p>
+                        <h4 id="inference-status-title">Processing status</h4>
+                      </div>
+                      <span className="state-pill">{offerRun.inferenceStatus.displayLabel}</span>
+                    </div>
+                    <dl className="inference-status-grid">
+                      <div><dt>Adapter</dt><dd>{offerRun.inferenceStatus.adapter}</dd></div>
+                      <div><dt>External provider contacted</dt><dd>{offerRun.inferenceStatus.providerContacted ? "YES" : "NO"}</dd></div>
+                      <div><dt>Verification</dt><dd>{offerRun.inferenceStatus.verification.replaceAll("_", " ").toUpperCase()}</dd></div>
+                      <div><dt>Attestation</dt><dd>{offerRun.inferenceStatus.attestation.replaceAll("_", " ").toUpperCase()}</dd></div>
+                    </dl>
+                    <p className="proposal-provenance">{offerRun.inferenceStatus.detail}</p>
+                  </section>
+
                   <section className="buyer-proposal" aria-labelledby="proposal-title">
                     <div className="offer-section-heading">
                       <div>
@@ -837,7 +856,7 @@ export function MandateWorkspace({
       </div>
 
       <footer className="footer-line workspace-footer">
-        <span>PHASE 05 · POLICY + SECURITY</span>
+        <span>PHASE 06 · PRIVATE / SIMULATED INFERENCE</span>
         <span className="footer-note">NO SUPPLIERS CONTACTED · NO APPROVAL OR EXECUTION · NO FUNDS MOVED</span>
       </footer>
     </main>

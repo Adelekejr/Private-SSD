@@ -6,7 +6,7 @@ Work from top to bottom. Select one unchecked task or one small group of depende
 
 **Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
 
-**Current scope rule (2026-10-23):** Phase 4 was committed and pushed by the coordinator to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. Adeleke authorized Phase 5 local implementation/review only. Keep Phase 5 uncommitted and unpushed; do not connect or modify Vercel, publish, deploy, or change repository visibility. Phase 6 and later remain unapproved; this overrides the source memory's generic checkpoint-commit suggestion.
+**Current scope rule (2026-10-23):** Phase 4 was committed and pushed to `Adelekejr/Private-SSD`, branch `phase-1-foundation`, at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phases 1–5 are committed and pushed. Adeleke authorized Phase 6 local implementation/review only. Keep Phase 6 uncommitted and unpushed; do not start Phase 7 or later, connect or modify Vercel, publish, deploy, or change repository visibility. This overrides the source memory's generic checkpoint-commit suggestion.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -104,15 +104,24 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - `checkOfferBeforeExecution` is a server-side guard/test seam: it strictly validates the untrusted candidate and re-evaluates current saved terms plus a caller-provided consumed-nonce set. It does not execute, persist, or consume anything; durable atomic nonce protection must be supplied by a future execution adapter.
 - `npm test` passed all 32 tests, covering every block rule, a fully valid offer, missing-price review, threshold approval, nonce replay, idempotency replay/conflict, and recheck after mandate changes. `npm run lint`, `npm run typecheck`, and `npm run build` passed.
 - A local production-server smoke test confirmed `GET /api/health` reports `policy-security`; the simulated offer results are `blocked`, `blocked`, and `review`; exact retries replay unchanged offers; changed-payload key reuse returns `409`; and the prompt-injection text is not echoed. The local server was stopped afterward.
-- Offers remain volatile and are not persisted. No supplier service, private AI, wallet, NEAR account, testnet, mainnet, approval action, settlement execution, or funds are involved. Phase 5 is local, uncommitted, and unpushed; no Vercel connection/change, deployment, publication, or visibility change occurred.
+- At the Phase 5 review checkpoint, the work was local and uncommitted/unpushed; it was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Offers remain volatile and are not persisted. No supplier service, private AI, wallet, NEAR account, testnet, mainnet, approval action, settlement execution, or funds were involved. No Vercel connection/change, deployment, publication, or visibility change occurred.
 
 ## 8. Phase 6 — private or simulated AI
 
-- [ ] Add a provider-neutral private inference adapter interface.
-- [ ] Add deterministic simulated-private fallback.
-- [ ] If credentials are available, add the NEAR AI Cloud gateway integration server-side.
-- [ ] Display verification/attestation status honestly.
-- [ ] Ensure raw sensitive input does not enter public logs.
+- [x] Add a provider-neutral private inference adapter interface.
+- [x] Add deterministic simulated-private fallback.
+- [x] Check whether credentials are available; add the NEAR AI Cloud gateway server-side only when a credential is present. (No credential was available; gateway integration is deferred.)
+- [x] Display verification/attestation status honestly.
+- [x] Ensure raw sensitive input does not enter public logs.
+
+### Phase 6 evidence (2026-10-23)
+
+- Cross-checked the original five source PDFs in `/home/ubuntu/upload/` against the Phase 6 scope and safety boundaries. Added `server/privacy/inference-adapter.ts` as a provider-neutral typed interface and `server/privacy/simulated-private-adapter.ts` as the deterministic local implementation using the existing buyer parser.
+- The offer API now uses the adapter and returns explicit provenance: `SIMULATED_PRIVATE_AI`, deterministic local parser, `providerContacted: false`, and verification/attestation `not_performed`. The UI displays these values and explains that the fallback is rules-based, not a model or private-provider call. The health endpoint reports `private-ai-simulation`.
+- No NEAR AI credential was available in the supplied saved-secret inventory or environment variables. No provider SDK, gateway integration, provider call, verification, or attestation was added or claimed; the conditional live integration remains deferred.
+- The route writes no request text to application logs, returns a generic processing error instead of exception text, and the existing idempotency store retains only a digest of the buyer request. Tests capture console output and verify a unique sensitive marker is absent from both logs and the API response; the local production-server smoke request confirmed the same marker was absent from server output.
+- `npm test` passed all 34 tests, including deterministic fallback/provenance and sensitive-text log/response checks. `npm run lint`, `npm run typecheck`, and `npm run build` passed. A local production-server smoke check confirmed health phase `private-ai-simulation`, Phase 6 privacy copy, a successful simulated offer response, no provider contact, and verification/attestation `not_performed`; the server was stopped afterward.
+- Phase 6 remains local and uncommitted/unpushed for owner review. No Vercel connection/change, deployment, publication, repository visibility change, external provider call, wallet, settlement, or funds were used.
 
 ## 9. Phase 7 — settlement
 

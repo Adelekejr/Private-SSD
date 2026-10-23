@@ -44,7 +44,7 @@ Do not mark a task complete because code was written. Mark it complete only when
 
 ### Current human approval override
 
-Phase 4 was committed and pushed by the coordinator to `phase-1-foundation` at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`. The current human instruction authorizes **Phase 5 local implementation/review only**. Keep Phase 5 uncommitted and unpushed; do not connect or modify Vercel, deploy, publish, or change repository visibility. Phase 6 and later require separate approval. This live scope supersedes older phase-only approval notes.
+Phase 4 was committed and pushed by the coordinator to `phase-1-foundation` at `fb37b33fa6564bc7a1994c2628287c33dfad5a4c`; Phase 5 was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. Phases 1–5 are committed and pushed. The current human instruction authorizes **Phase 6 local implementation/review only**. Keep Phase 6 uncommitted and unpushed; do not start Phase 7 or later, connect or modify Vercel, deploy, publish, or change repository visibility. This live scope supersedes older phase-only approval notes.
 
 ## 4. Permanent decisions
 
@@ -99,7 +99,15 @@ Do not import, copy, or reuse InvoiceLens. Do not assume old PrivateSpend code e
 - Added deterministic server-side policy evaluation for budget, asset, unit price, recipient, chain, reliability, expiry, nonce replay, and approval threshold. Results distinguish `blocked`, `review`, and `pass`; policy reasons are separate from unverified supplier notes. Missing unit price under a configured maximum requires review, and amounts strictly above threshold require human approval.
 - Added strict offer expiry/nonce schema, short-lived process-local offer-simulation idempotency, and `checkOfferBeforeExecution` as a no-execution server guard/test seam. The guard revalidates current mandate terms and a caller-provided consumed-nonce set; it does not execute or consume a nonce.
 - All 32 tests, lint, typecheck, production build, and local production API smoke checks passed. Health reports `policy-security`; results were `blocked`, `blocked`, `review`; idempotent replay and `409` conflict behavior passed; prompt-injection content was not echoed.
-- Phase 5 remains local and uncommitted/unpushed. No Vercel connection, deployment, publication, visibility change, external supplier call, wallet, approval action, settlement, or funds were used. Phase 6 requires separate approval.
+- At the Phase 5 review checkpoint, Phase 5 remained local and uncommitted/unpushed; it was subsequently committed and pushed at `c7d0d46c8ce7d810407eb50567fb9e622a86802f`. No Vercel connection, deployment, publication, visibility change, external supplier call, wallet, approval action, settlement, or funds were used. Phase 6 required separate approval at that checkpoint.
+
+### 7.5 Phase 6 checkpoint (2026-10-23)
+
+- Added a provider-neutral typed inference adapter and a deterministic local simulated fallback using the existing buyer parser. The offer API returns explicit provenance: no provider was contacted and verification/attestation were not performed; the workspace displays those states and explains that this is rules-based processing, not a real model call.
+- No NEAR AI credential was available in the supplied saved-secret inventory or environment. The optional server-side NEAR AI Cloud gateway was deferred; no provider SDK or external call was added.
+- Raw buyer text is not written to application logs or persisted. The idempotency cache stores only the request digest. A test captures application console output and confirms a unique sensitive marker is absent from both logs and the API response; the production-server smoke check confirmed it was absent from server output too.
+- All 34 tests passed; lint, typecheck, production build, and local production-server smoke checks passed. Health reports `private-ai-simulation`; the API reports simulated mode, `providerContacted: false`, and verification/attestation `not_performed`.
+- Phase 6 remains local and uncommitted/unpushed for owner review. No Vercel connection, deployment, publication, visibility change, real provider call, wallet, settlement, or funds were used. Phase 7 requires separate approval.
 
 ## 8. What not to do
 

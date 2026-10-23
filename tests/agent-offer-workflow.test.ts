@@ -166,6 +166,13 @@ test("simulation API applies server-side policy while keeping buyer parsing non-
     }>;
     rejectedResponses: Array<{ fixtureType: string }>;
     buyerProposal: { constraints: unknown[] };
+    inferenceStatus: {
+      mode: string;
+      displayLabel: string;
+      providerContacted: boolean;
+      verification: string;
+      attestation: string;
+    };
   };
   assert.equal(payload.mode, "SIMULATED");
   assert.equal(payload.policyAuthority, "SERVER");
@@ -178,6 +185,11 @@ test("simulation API applies server-side policy while keeping buyer parsing non-
   assert.ok(payload.offers[2]?.riskReasons.some((reason) => reason.includes("unverified")));
   assert.equal(payload.rejectedResponses[0]?.fixtureType, "prompt-injection");
   assert.ok(payload.buyerProposal.constraints.length > 0);
+  assert.equal(payload.inferenceStatus.mode, "simulated");
+  assert.equal(payload.inferenceStatus.displayLabel, "SIMULATED_PRIVATE_AI");
+  assert.equal(payload.inferenceStatus.providerContacted, false);
+  assert.equal(payload.inferenceStatus.verification, "not_performed");
+  assert.equal(payload.inferenceStatus.attestation, "not_performed");
 });
 
 test("simulation API returns the same evaluated result on idempotent replay and rejects key reuse with a different request", async () => {
@@ -218,4 +230,41 @@ test("simulation API requires an idempotency key and rejects malformed input or 
     { params: Promise.resolve({ id: "missing-mandate" }) },
   );
   assert.equal(missing.status, 404);
+});
+
+test("sensitive free text is not echoed or written to application logs", async () => {
+  const sensitiveMarker = "PRIVATE-SPEND-LOG-SENTINEL-7f3c9b";
+  const captured: string[] = [];
+  const methods = ["log", "info", "warn", "error", "debug"] as const;
+  const originals = new Map<string, PropertyDescriptor | undefined>();
+
+  for (const method of methods) {
+    originals.set(method, Object.getOwnPropertyDescriptor(console, method));
+    Object.defineProperty(console, method, {
+      configurable: true,
+      value: (...args: unknown[]) => captured.push(args.map(String).join(" ")),
+    });
+  }
+
+  let response: Response;
+  try {
+    response = await simulateOffers(
+      simulateRequest(
+        { requestText: `General request; confidential note ${sensitiveMarker}` },
+        "privacy-log-check-0001",
+      ),
+      { params: Promise.resolve({ id: DEMO_MANDATE_ID }) },
+    );
+  } finally {
+    for (const method of methods) {
+      const original = originals.get(method);
+      if (original) Object.defineProperty(console, method, original);
+      else Reflect.deleteProperty(console, method);
+    }
+  }
+
+  const responseText = await response.text();
+  assert.equal(response.status, 200);
+  assert.equal(responseText.includes(sensitiveMarker), false);
+  assert.equal(captured.join("\n").includes(sensitiveMarker), false);
 });

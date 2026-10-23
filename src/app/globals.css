@@ -569,11 +569,33 @@ h1 {
 }
 .buyer-proposal,
 .offer-comparison,
-.rejected-responses {
+.rejected-responses,
+.inference-status {
   display: grid;
   gap: 11px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
+}
+.inference-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+.inference-status-grid > div {
+  min-width: 0;
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.inference-status-grid dt {
+  color: var(--secondary);
+  font-size: 9px;
+}
+.inference-status-grid dd {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
 }
 .proposal-provenance {
   margin: 0;
@@ -1103,6 +1125,10 @@ h1 {
   .header-meta {
     align-items: flex-start;
     text-align: left;
+  }
+
+  .inference-status-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .workspace-tag {

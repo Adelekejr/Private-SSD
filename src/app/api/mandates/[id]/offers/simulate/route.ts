@@ -1,6 +1,8 @@
 import { parseBuyerRequest } from "../../../../../../domain/buyer-request-parser";
+import type { InferenceStatus } from "../../../../../../domain/inference";
 import { getProcurementRepository } from "../../../../../../../server/persistence/in-memory-repository";
 import { runDeterministicSupplierAgents } from "../../../../../../../server/agents/supplier-agents";
+import { SimulatedPrivateInferenceAdapter } from "../../../../../../../server/privacy/simulated-private-adapter";
 import {
   applyPolicyEvaluation,
   evaluateOffer,
@@ -13,12 +15,14 @@ type RouteContext = { params: Promise<{ id: string }> };
 interface OfferSimulationPayload {
   mode: "SIMULATED";
   policyAuthority: "SERVER";
+  inferenceStatus: InferenceStatus;
   buyerProposal: ReturnType<typeof parseBuyerRequest>;
   offers: ReturnType<typeof applyPolicyEvaluation>[];
   rejectedResponses: ReturnType<typeof runDeterministicSupplierAgents>["rejectedResponses"];
 }
 
 const idempotencyStore = new InMemoryIdempotencyStore<OfferSimulationPayload>();
+const inferenceAdapter = new SimulatedPrivateInferenceAdapter();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -57,45 +61,54 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ error: "Mandate not found." }, { status: 404 });
   }
 
-  const result = await idempotencyStore.run(
-    `offer-simulation:${id}:${idempotencyKey}`,
-    { requestText: body.requestText, mandate },
-    () => {
-      const now = new Date();
-      const buyerProposal = parseBuyerRequest(body.requestText as string, mandate);
-      const supplierRun = runDeterministicSupplierAgents(mandate, {
-        now,
-        idempotencyKey,
-      });
-      const observedNonces = new Set<string>();
-      const offers = supplierRun.offers.map((offer) => {
-        const policyEvaluation = evaluateOffer(mandate, offer, {
-          now,
-          consumedNonces: observedNonces,
+  try {
+    const result = await idempotencyStore.run(
+      `offer-simulation:${id}:${idempotencyKey}`,
+      { requestText: body.requestText, mandate },
+      async () => {
+        const now = new Date();
+        const inference = await inferenceAdapter.infer({
+          requestText: body.requestText as string,
+          mandate,
         });
-        if (offer.nonce) observedNonces.add(offer.nonce);
-        return applyPolicyEvaluation(offer, policyEvaluation);
-      });
+        const supplierRun = runDeterministicSupplierAgents(mandate, {
+          now,
+          idempotencyKey,
+        });
+        const observedNonces = new Set<string>();
+        const offers = supplierRun.offers.map((offer) => {
+          const policyEvaluation = evaluateOffer(mandate, offer, {
+            now,
+            consumedNonces: observedNonces,
+          });
+          if (offer.nonce) observedNonces.add(offer.nonce);
+          return applyPolicyEvaluation(offer, policyEvaluation);
+        });
 
-      return {
-        mode: "SIMULATED",
-        policyAuthority: "SERVER",
-        buyerProposal,
-        offers,
-        rejectedResponses: supplierRun.rejectedResponses,
-      };
-    },
-  );
-
-  if (result.status === "conflict") {
-    return Response.json(
-      { error: "The idempotency key was already used for a different request." },
-      { status: 409 },
+        return {
+          mode: "SIMULATED",
+          policyAuthority: "SERVER",
+          inferenceStatus: inference.status,
+          buyerProposal: inference.output,
+          offers,
+          rejectedResponses: supplierRun.rejectedResponses,
+        };
+      },
     );
-  }
 
-  return Response.json({
-    ...result.response,
-    idempotency: result.status === "replayed" ? "REPLAYED" : "NEW",
-  });
+    if (result.status === "conflict") {
+      return Response.json(
+        { error: "The idempotency key was already used for a different request." },
+        { status: 409 },
+      );
+    }
+
+    return Response.json({
+      ...result.response,
+      idempotency: result.status === "replayed" ? "REPLAYED" : "NEW",
+    });
+  } catch {
+    // Do not forward exception text: it could contain sensitive request data.
+    return Response.json({ error: "Could not process the buyer request." }, { status: 500 });
+  }
 }
