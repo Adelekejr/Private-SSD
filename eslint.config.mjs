@@ -13,5 +13,11 @@ export default defineConfig([
       ...nextPlugin.configs.recommended.rules,
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**",
+    ".test-dist/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
 ]);

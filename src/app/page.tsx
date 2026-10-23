@@ -10,11 +10,11 @@ export default function HomePage() {
           </span>
           <span>PRIVATE SPEND NETWORK</span>
         </Link>
-        <span className="phase-tag">FOUNDATION / PHASE 01</span>
+        <span className="phase-tag">DOMAIN + PERSISTENCE / PHASE 02</span>
       </header>
 
       <section className="intro" aria-labelledby="page-title">
-        <p className="eyebrow">LOCAL PROJECT SKELETON</p>
+        <p className="eyebrow">DOMAIN FOUNDATION ONLY</p>
         <h1 id="page-title">
           Agents can negotiate.
           <br />
@@ -35,14 +35,17 @@ export default function HomePage() {
         </div>
         <h2 id="stage-title">Product workflow not implemented</h2>
         <p>
-          This stage establishes the repository, app shell, and server health
-          check only. Mandates, supplier offers, policy evaluation, approvals,
-          private inference, and settlement are intentionally out of scope until
-          the foundation is reviewed and a later stage is approved.
+          Phase 2 adds typed domain models, deterministic sample records, a
+          process-local in-memory repository, and guarded status transitions.
+          These records are not exposed through a product API or workflow UI.
+          Mandate creation, supplier agents, policy evaluation, approvals,
+          private inference, wallet connection, and settlement workflow remain
+          unimplemented.
         </p>
         <p className="honesty-note">
-          No provider is called, no wallet is connected, and no simulated,
-          testnet, or live transaction is performed by this foundation.
+          The three offers are static fixtures; no supplier was contacted and no
+          policy engine was run. No wallet is connected and no settlement was
+          submitted.
         </p>
       </section>
 

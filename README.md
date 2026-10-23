@@ -4,7 +4,9 @@ PrivateSpend Network is a planned confidential, multi-agent procurement and sett
 
 ## Current state
 
-This repository is at the **Phase 1 foundation** stage. It contains a minimal Next.js application shell, a health endpoint, project instructions, and the product/design/architecture/task documents. The procurement workflow is **not implemented yet**: there are no mandates, supplier agents, offer evaluation, policy decisions, approval flow, private inference, wallet permissions, or settlement execution in this foundation. The later product-workflow stages require Adeleke's review and separate approval.
+This repository is at the **Phase 2 domain and persistence** stage. It contains the Next.js application shell, health endpoint, typed domain models, deterministic sample records, a process-local in-memory repository, and guarded status transitions. Mandate creation, supplier agents, policy evaluation, approval flow, private inference, wallet permissions, and settlement execution are not implemented.
+
+The in-memory adapter is volatile: its data resets on process restart and is not shared between workers or serverless instances. The sample offers' policy labels are fixed fixture data, not the output of a policy engine.
 
 No provider is called and no NEAR account, key, testnet, mainnet, or funds are used here. No private or attested inference is claimed. Any later simulated flow must be labeled as simulated.
 
@@ -17,21 +19,25 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000` to see the foundation-only landing page. The infrastructure health check is `GET http://localhost:3000/api/health`; it reports service readiness only and does not exercise a product workflow.
+Open `http://localhost:3000` to see the foundation-only landing page. The infrastructure health check is `GET http://localhost:3000/api/health`; it reports service readiness and the current `domain-persistence` phase only, and does not exercise a product workflow.
 
 Useful checks:
 
 ```sh
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
 ## Project map
 
 - `src/app/` — Next.js App Router shell and the minimal health route.
-- `src/components/`, `src/domain/`, `src/styles/` — reserved frontend/domain structure.
-- `server/agents/`, `server/policy/`, `server/settlement/`, `server/privacy/`, `server/audit/` — server-only boundaries reserved for later approved stages.
+- `src/domain/` — typed procurement, offer, settlement, audit, and status-transition models.
+- `src/components/`, `src/styles/` — reserved frontend structure.
+- `server/persistence/` — in-memory adapter, deterministic fixtures, and the documented repository replacement boundary.
+- `server/agents/`, `server/policy/`, `server/settlement/`, `server/privacy/`, `server/audit/` — boundaries reserved for later approved stages.
+- `tests/` — focused Node test-runner coverage for the Phase 2 domain and adapter.
 - `docs/agent-pack/` — the source-of-truth product, architecture, design, execution, and agent-memory documents.
 - `AGENTS.md` and `memory.md` — repository operating instructions and durable project state.
 

@@ -4,7 +4,9 @@
 
 Work from top to bottom. Select one unchecked task or one small group of dependent tasks. Implement it, run the relevant checks, update this file, and record important decisions in `memory.md`. Do not mark a task complete without evidence.
 
-**Current Phase 1 scope rule:** The user approved the repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification. Product workflow features remain out of scope until review and separate approval. No commit, push, deploy, Vercel change, or repository visibility change may occur without separate explicit human approval. This rule overrides the source memory’s generic checkpoint-commit step.
+**Phase 1 historical scope:** The repository skeleton, documentation, names-only `.env.example`, package setup and lockfile, minimal placeholder app shell, and clean-install/build verification were approved and completed in Phase 1. The current approved scope is stated below.
+
+**Current scope rule:** Phase 1 is complete and committed at `d8129aac8e4fe035690346e5d52fc51d748626f2`. Adeleke explicitly approved Phase 2, limited to the checklist below. Phase 3 and later remain unapproved. Do not commit, push, publish, deploy, change repository visibility, or modify Vercel without separate explicit approval; this overrides the source memory's generic checkpoint-commit step.
 
 Mark tasks complete only when evidence is recorded below. Later phases remain unchecked until separately approved.
 
@@ -31,14 +33,24 @@ Mark tasks complete only when evidence is recorded below. Later phases remain un
 - `npm run typecheck` passed.
 - `npm run build` passed with Next.js 16.4.3; the build reported `/` as static and `/api/health` as on-demand server-rendered.
 - A local production-server smoke test confirmed the home page states that the product workflow is not implemented and `GET /api/health` returns `status: ok`, `service: privatespend-network`, `phase: foundation`. The local server was stopped afterward.
-- The current branch remains local and has no commits; nothing was pushed, deployed, or made public.
+- Phase 1 was committed and pushed by the coordinator to `phase-1-foundation` as `d8129aac8e4fe035690346e5d52fc51d748626f2`. Phase 2 changes remain local and uncommitted; no Phase 2 deployment, Vercel change, or visibility change occurred.
 
 ## 4. Phase 2 — domain and persistence
 
-- [ ] Add typed mandate, constraint, offer, settlement, and audit-event models.
-- [ ] Add deterministic seed data for the three supplier offers.
-- [ ] Add local persistence or an in-memory adapter with a documented replacement boundary.
-- [ ] Add status transitions and reject invalid transitions.
+- [x] Add typed mandate, constraint, offer, settlement, and audit-event models.
+- [x] Add deterministic seed data for the three supplier offers.
+- [x] Add local persistence or an in-memory adapter with a documented replacement boundary.
+- [x] Add status transitions and reject invalid transitions.
+
+### Phase 2 evidence (2026-10-23)
+
+- Added TypeScript models in `src/domain/models.ts`, including a discriminated `Constraint` union, mandate/settlement statuses, offer policy labels, and redacted audit-event shape.
+- Added deterministic demo data in `server/persistence/demo-seed.ts`: one cloud-compute mandate, three fixed offer fixtures (two labeled blocked and one pass), a `simulated`/`not_started` settlement record, and a redacted seed event. These policy labels are fixture data, not computed decisions.
+- Added the async-shaped `ProcurementRepository` contract and `InMemoryProcurementRepository`; the documented replacement boundary and process-local/volatile limitation are in `server/persistence/README.md`.
+- Added mandate and settlement transition graphs. Invalid transitions throw `InvalidStatusTransitionError` without mutating state; valid transitions append redacted audit events.
+- `npm test` passed all 6 focused tests. `npm run lint`, `npm run typecheck`, and `npm run build` passed. The tests use Node's built-in runner and the existing TypeScript compiler; no test dependency was added.
+- A local production-server smoke test confirmed the landing-page Phase 2/fixture copy and `GET /api/health` returns `status: ok`, `service: privatespend-network`, `phase: domain-persistence`; the server was stopped afterward.
+- The landing page remains a non-interactive placeholder, and no product API, supplier agent, policy engine, AI/provider, wallet, or settlement execution was added. Phase 2 changes remain uncommitted and unpushed.
 
 ## 5. Phase 3 — mandate workflow
 
